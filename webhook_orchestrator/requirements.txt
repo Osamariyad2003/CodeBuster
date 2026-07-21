@@ -1,0 +1,10 @@
+fastapi
+uvicorn
+python-dotenv
+redis
+slowapi
+structlog
+celery
+pytest
+httpx
+pyyaml

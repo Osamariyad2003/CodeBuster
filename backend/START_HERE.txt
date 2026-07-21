@@ -1,0 +1,98 @@
+╔══════════════════════════════════════════════════════════════════════════╗
+║                                                                          ║
+║               🤖 CodeBuster - GitHub App Integration                     ║
+║                                                                          ║
+╚══════════════════════════════════════════════════════════════════════════╝
+
+Your GitHub App Private Key Fingerprint:
+  SHA256:ZZTlCLrOKVL5JrravL7UKRlffbCipz/FlEM+kLVbtog=
+
+┌──────────────────────────────────────────────────────────────────────────┐
+│ STEP 1: Create Your .env File                                           │
+└──────────────────────────────────────────────────────────────────────────┘
+
+  Windows (PowerShell):
+    PS> cd backend
+    PS> Copy-Item config_template.env .env
+
+  Mac/Linux:
+    $ cd backend
+    $ cp config_template.env .env
+
+┌──────────────────────────────────────────────────────────────────────────┐
+│ STEP 2: Edit the .env File                                              │
+└──────────────────────────────────────────────────────────────────────────┘
+
+  Open backend/.env in your text editor and add:
+
+  GITHUB_APP_ID=123456  ← Your GitHub App ID
+  
+  GITHUB_APP_PRIVATE_KEY="""-----BEGIN RSA PRIVATE KEY-----
+  MIIEpAIBAAKCAQEA...  ← Paste your ENTIRE private key here
+  ...multiple lines...
+  -----END RSA PRIVATE KEY-----"""
+  
+  GITHUB_WEBHOOK_SECRET=your-random-secret  ← Any random string
+  
+  FLASK_SECRET_KEY=another-random-string  ← Any random string
+
+┌──────────────────────────────────────────────────────────────────────────┐
+│ STEP 3: Verify Your Setup                                               │
+└──────────────────────────────────────────────────────────────────────────┘
+
+  Run the verification script:
+    $ cd backend
+    $ python verify_setup.py
+
+  You should see: ✅ All checks passed!
+
+┌──────────────────────────────────────────────────────────────────────────┐
+│ STEP 4: Start the Application                                           │
+└──────────────────────────────────────────────────────────────────────────┘
+
+  Terminal 1 (Backend):
+    $ cd backend
+    $ python app.py
+
+  Terminal 2 (Frontend):
+    $ cd frontend
+    $ npm run dev
+
+┌──────────────────────────────────────────────────────────────────────────┐
+│ STEP 5: Test It!                                                        │
+└──────────────────────────────────────────────────────────────────────────┘
+
+  Option A: Manual Upload
+    1. Open http://localhost:5174
+    2. Upload a code folder
+    3. See AI review results!
+
+  Option B: GitHub Integration
+    1. Install GitHub App on your repository
+    2. Create a Pull Request
+    3. CodeBuster reviews it automatically!
+
+┌──────────────────────────────────────────────────────────────────────────┐
+│ 📚 Documentation                                                         │
+└──────────────────────────────────────────────────────────────────────────┘
+
+  • Complete Guide:    backend/GITHUB_APP_SETUP.md
+  • Quick Reference:   backend/QUICK_START.md
+  • Summary:           SETUP_YOUR_GITHUB_APP.md
+  • Verify Setup:      python backend/verify_setup.py
+
+┌──────────────────────────────────────────────────────────────────────────┐
+│ 🔒 Security                                                              │
+└──────────────────────────────────────────────────────────────────────────┘
+
+  ✅ NEVER commit your .env file to Git (it's in .gitignore)
+  ✅ NEVER share your private key publicly
+  ✅ Use strong random strings for secrets
+  ✅ Rotate keys periodically in production
+
+═══════════════════════════════════════════════════════════════════════════
+
+                Ready to make your code perfect! 🚀
+
+═══════════════════════════════════════════════════════════════════════════
+

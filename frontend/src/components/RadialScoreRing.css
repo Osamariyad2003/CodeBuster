@@ -1,0 +1,40 @@
+.score-ring-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.score-ring-svg {
+  transform: rotate(-90deg);
+  width: 100%;
+  height: 100%;
+}
+
+.score-ring-bg {
+  fill: none;
+  stroke: var(--border-subtle);
+  transition: stroke 0.3s ease;
+}
+
+html.dark .score-ring-bg {
+  stroke: rgba(255, 255, 255, 0.1);
+}
+
+.score-ring-progress {
+  fill: none;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 1.2s cubic-bezier(0.16, 1, 0.3, 1), stroke 0.3s ease;
+  filter: drop-shadow(0 0 8px var(--ring-glow-color));
+}
+
+.score-ring-text {
+  position: absolute;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.8rem;
+  color: var(--text-primary);
+  display: flex;
+  align-items: baseline;
+  letter-spacing: -0.025em;
+}

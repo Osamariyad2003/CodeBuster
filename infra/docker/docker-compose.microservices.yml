@@ -1,0 +1,140 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: codebuster
+      POSTGRES_PASSWORD: codebuster_pass
+      POSTGRES_DB: codebuster
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U codebuster"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - codebuster-net
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - codebuster-net
+
+  minio:
+    image: minio/minio:latest
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: codebuster
+      MINIO_ROOT_PASSWORD: codebuster_pass
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+    networks:
+      - codebuster-net
+
+  auth-service:
+    build:
+      context: ../..
+      dockerfile: infra/docker/Dockerfile.services
+    working_dir: /app/services/auth-service
+    command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8081"]
+    environment:
+      SERVICE_NAME: auth-service
+      DATABASE_URL: postgresql+psycopg2://codebuster:codebuster_pass@db:5432/codebuster
+      REDIS_URL: redis://redis:6379/0
+    depends_on:
+      - db
+      - redis
+    ports:
+      - "8081:8081"
+    networks:
+      - codebuster-net
+
+  review-service:
+    build:
+      context: ../..
+      dockerfile: infra/docker/Dockerfile.services
+    working_dir: /app/services/review-service
+    command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8082"]
+    environment:
+      SERVICE_NAME: review-service
+      DATABASE_URL: postgresql+psycopg2://codebuster:codebuster_pass@db:5432/codebuster
+      REDIS_URL: redis://redis:6379/0
+      S3_ENDPOINT_URL: http://minio:9000
+      S3_BUCKET_REVIEWS: codebuster-reviews
+    depends_on:
+      - db
+      - redis
+      - minio
+    ports:
+      - "8082:8082"
+    networks:
+      - codebuster-net
+
+  github-service:
+    build:
+      context: ../..
+      dockerfile: infra/docker/Dockerfile.services
+    working_dir: /app/services/github-service
+    command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8083"]
+    environment:
+      SERVICE_NAME: github-service
+      DATABASE_URL: postgresql+psycopg2://codebuster:codebuster_pass@db:5432/codebuster
+      REDIS_URL: redis://redis:6379/0
+    depends_on:
+      - db
+      - redis
+    ports:
+      - "8083:8083"
+    networks:
+      - codebuster-net
+
+  worker-service:
+    build:
+      context: ../..
+      dockerfile: infra/docker/Dockerfile.services
+    working_dir: /app
+    command: ["celery", "-A", "services.worker_service.celery_app.celery_app", "worker", "-l", "info"]
+    environment:
+      SERVICE_NAME: worker-service
+      DATABASE_URL: postgresql+psycopg2://codebuster:codebuster_pass@db:5432/codebuster
+      REDIS_URL: redis://redis:6379/0
+    depends_on:
+      - db
+      - redis
+    networks:
+      - codebuster-net
+
+  frontend:
+    image: node:20-alpine
+    working_dir: /app
+    command: ["npm", "run", "dev", "--", "--host", "0.0.0.0", "--port", "5173"]
+    volumes:
+      - ../../frontend:/app
+      - /app/node_modules
+    environment:
+      VITE_API_URL: http://localhost:8082
+    ports:
+      - "5173:5173"
+    networks:
+      - codebuster-net
+
+networks:
+  codebuster-net:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  minio_data:
+

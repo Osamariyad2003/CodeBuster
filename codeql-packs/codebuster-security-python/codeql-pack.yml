@@ -1,0 +1,20 @@
+name: codebuster/security-python
+version: 0.0.1
+libraryPathDependencies: codeql/python-all
+
+dataExtensions:
+  - ext/*.qls
+
+defaultSuite:
+  description: "CodeBuster deep security queries for Python"
+  queries:
+    # Include standard security queries
+    - uses: codeql/python-queries@latest
+      with:
+        include:
+          - security
+          - security-and-quality
+    # Include any custom queries in ./queries
+    - from: ./queries
+      where: "true"
+

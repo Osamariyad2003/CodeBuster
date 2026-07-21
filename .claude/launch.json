@@ -1,0 +1,46 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "frontend",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["node_modules/vite/bin/vite.js"],
+      "port": 5174,
+      "cwd": "frontend"
+    },
+    {
+      "name": "backend-flask",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["-X", "utf8", "main.py"],
+      "port": 5000,
+      "cwd": "backend"
+    },
+    {
+      "name": "backend-fastapi",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["-m", "uvicorn", "backend.api.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"],
+      "port": 8000
+    },
+    {
+      "name": "webhook-orchestrator",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["main.py"],
+      "port": 8000,
+      "cwd": "webhook_orchestrator"
+    },
+    {
+      "name": "webhook-ingestor",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["main.py"],
+      "port": 8000,
+      "cwd": "webhook_ingestor"
+    },
+    {
+      "name": "celery-worker",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["-X", "utf8", "-m", "celery", "-A", "app.celery_app", "worker", "--loglevel=info", "--pool=solo", "-Q", "codebuster"],
+      "port": 0,
+      "cwd": "backend"
+    }
+  ]
+}

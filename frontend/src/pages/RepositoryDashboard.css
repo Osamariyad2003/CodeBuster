@@ -1,0 +1,281 @@
+/* ── Repository Dashboard — dark theme ─────────────────────── */
+
+.repository-dashboard {
+    min-height: 100vh;
+    background: var(--content-bg, #0F1117);
+    color: var(--text-primary, #E6EDF3);
+}
+
+/* ── Hero ──────────────────────────────────────────────────── */
+.dash-hero-card {
+    background: linear-gradient(135deg, #0D1117 0%, #161B27 55%, #1a2744 100%);
+    border: 1px solid rgba(99, 102, 241, 0.18);
+    box-shadow:
+        0 0 0 1px rgba(255,255,255,0.04),
+        0 8px 40px rgba(0,0,0,0.45),
+        0 0 80px rgba(99,102,241,0.06);
+    transition: box-shadow 0.25s;
+    position: relative;
+    overflow: hidden;
+}
+
+.dash-hero-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at 80% 50%, rgba(99,102,241,0.08) 0%, transparent 60%);
+    pointer-events: none;
+}
+
+/* ── Shared card ────────────────────────────────────────────── */
+.dash-card {
+    border-radius: 14px !important;
+    background: var(--surface-card, #161B27) !important;
+    border: 1px solid var(--border-default, #30363D) !important;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.25) !important;
+    transition: box-shadow 0.2s, border-color 0.2s, transform 0.2s;
+}
+.dash-card:hover {
+    box-shadow: 0 6px 28px rgba(0,0,0,0.4) !important;
+    border-color: rgba(99,102,241,0.35) !important;
+    transform: translateY(-1px);
+}
+
+.dash-card-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: transparent !important;
+    border-bottom: 1px solid var(--border-subtle, #21262D) !important;
+    padding: 14px 20px 13px;
+    font-weight: 700;
+    font-size: 0.8rem;
+    color: var(--text-secondary, #8B949E);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+/* ── Stat cards ─────────────────────────────────────────────── */
+.dash-stat-card {
+    border-radius: 14px;
+    background: var(--surface-card, #161B27);
+    border: 1px solid var(--border-default, #30363D);
+    padding: 20px;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+}
+.dash-stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: var(--accent-gradient, linear-gradient(90deg, #6366F1, #8B5CF6));
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+.dash-stat-card:hover {
+    border-color: rgba(99,102,241,0.4);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.35);
+    transform: translateY(-2px);
+}
+.dash-stat-card:hover::before { opacity: 1; }
+
+.dash-stat-icon {
+    width: 40px; height: 40px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    font-size: 16px;
+}
+
+.dash-stat-value {
+    font-size: 1.75rem;
+    font-weight: 800;
+    color: var(--text-primary, #E6EDF3);
+    line-height: 1;
+    letter-spacing: -0.03em;
+}
+.dash-stat-label {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--text-muted, #6E7681);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-top: 2px;
+}
+
+/* ── Section label ──────────────────────────────────────────── */
+.dash-section-label {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+}
+.dash-section-label-inner {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.dash-section-label-text {
+    font-weight: 700;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-secondary, #8B949E);
+}
+.dash-section-icon {
+    color: #6366F1;
+}
+
+/* ── Insight banner ─────────────────────────────────────────── */
+.dash-insight {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 18px;
+    border-radius: 12px;
+    margin-bottom: 24px;
+    border-width: 1px;
+    border-style: solid;
+    font-size: 0.86rem;
+    font-weight: 600;
+}
+.dash-insight-critical {
+    background: rgba(239,68,68,0.1);
+    border-color: rgba(239,68,68,0.3);
+    color: #FCA5A5;
+}
+.dash-insight-major {
+    background: rgba(245,158,11,0.1);
+    border-color: rgba(245,158,11,0.3);
+    color: #FCD34D;
+}
+.dash-insight-good {
+    background: rgba(16,185,129,0.1);
+    border-color: rgba(16,185,129,0.3);
+    color: #6EE7B7;
+}
+.dash-insight-neutral {
+    background: rgba(99,102,241,0.1);
+    border-color: rgba(99,102,241,0.3);
+    color: #A5B4FC;
+}
+
+/* ── Divider ────────────────────────────────────────────────── */
+.dash-divider {
+    display: flex; align-items: center; gap: 14px;
+    margin: 28px 0 20px;
+}
+.dash-divider-line {
+    flex: 1; height: 1px;
+    background: var(--border-subtle, #21262D);
+}
+.dash-divider-label {
+    font-size: 0.65rem; font-weight: 700;
+    color: var(--text-muted, #6E7681);
+    text-transform: uppercase; letter-spacing: 0.12em;
+    white-space: nowrap;
+}
+
+/* ── Tabs ───────────────────────────────────────────────────── */
+.repo-dashboard-tabs {
+    border-bottom: 1px solid var(--border-default, #30363D) !important;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    gap: 2px;
+}
+.repo-dashboard-tabs::-webkit-scrollbar { display: none; }
+
+.repo-dashboard-tabs .nav-link {
+    color: var(--text-secondary, #8B949E);
+    border: none !important;
+    border-bottom: 2px solid transparent !important;
+    margin-bottom: -1px;
+    padding: 10px 16px;
+    font-weight: 600;
+    font-size: 0.84rem;
+    transition: all 0.15s;
+    white-space: nowrap;
+    border-radius: 0 !important;
+    background: transparent !important;
+}
+.repo-dashboard-tabs .nav-link:hover {
+    color: #818CF8;
+    background: rgba(99,102,241,0.06) !important;
+}
+.repo-dashboard-tabs .nav-link.active {
+    color: #818CF8 !important;
+    border-bottom-color: #6366F1 !important;
+    background: transparent !important;
+}
+
+/* ── Tab content ────────────────────────────────────────────── */
+.tab-content { width: 100%; min-height: 200px; }
+
+/* ── Severity pills in hero ─────────────────────────────────── */
+.dash-severity-pill {
+    display: flex; align-items: center; gap: 5px;
+    font-size: 0.78rem; font-weight: 700;
+}
+
+/* ── Empty state ────────────────────────────────────────────── */
+.dash-empty {
+    border: 2px dashed rgba(99,102,241,0.2);
+    background: rgba(99,102,241,0.03);
+    border-radius: 16px;
+    text-align: center;
+    padding: 56px 24px;
+    margin-bottom: 24px;
+}
+
+/* ── Connected alert ────────────────────────────────────────── */
+.dash-connected-alert {
+    background: rgba(56,189,248,0.07);
+    border: 1px solid rgba(56,189,248,0.2);
+    border-left: 4px solid #38BDF8;
+    border-radius: 12px;
+    padding: 16px 20px;
+    margin-bottom: 20px;
+    color: var(--text-primary, #E6EDF3);
+}
+
+/* ── Scan pending ───────────────────────────────────────────── */
+.dash-scan-pending {
+    background: rgba(59,130,246,0.05);
+    border: 1px solid rgba(59,130,246,0.15);
+    border-radius: 14px;
+    text-align: center;
+    padding: 48px 24px;
+    margin-bottom: 24px;
+}
+
+/* ── Score badge on hero ────────────────────────────────────── */
+.dash-score-badge {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+/* ── Fix first items ────────────────────────────────────────── */
+.fix-first-item {
+    padding: 10px 12px;
+    border-radius: 8px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--border-subtle, #21262D);
+    transition: all 0.15s;
+    margin-bottom: 8px;
+}
+.fix-first-item:hover {
+    background: rgba(99,102,241,0.07);
+    border-color: rgba(99,102,241,0.25);
+}
+
+@media (max-width: 768px) {
+    .dash-card-header { padding: 12px 14px; }
+    .tab-content { overflow-x: auto; }
+    .dash-stat-value { font-size: 1.4rem; }
+}

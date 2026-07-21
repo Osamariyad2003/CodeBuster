@@ -1,0 +1,42 @@
+{
+  "overall_health_score": 98,
+  "category_scores": {
+    "code_quality": 98
+  },
+  "summary": {
+    "total_issues": 2,
+    "critical": 0,
+    "major": 0,
+    "minor": 2,
+    "info": 0,
+    "status": "fallback_active"
+  },
+  "prioritized_issues": [
+    {
+      "id": "find-001",
+      "tool": "pylint",
+      "title": "Magic Number",
+      "description": "Magic number 5000 found in request timeout.",
+      "file": "backend/api/client.py",
+      "line": 12,
+      "code_snippet": "10 | def fetch_data(url):\n11 |     # Default configuration\n12 | --> timeout_ms = 5000\n13 |     return requests.get(url, timeout=timeout_ms/1000)",
+      "priority_score": 20,
+      "ai_explanation": "This issue was detected by pylint. AI reasoning is currently unavailable, so this finding is based on standard rules."
+    },
+    {
+      "id": "find-002",
+      "tool": "eslint",
+      "title": "Hardcoded String",
+      "description": "Literal string found in sensitive context.",
+      "file": "frontend/src/auth/AuthProvider.tsx",
+      "line": 85,
+      "code_snippet": "83 |     const login = async (creds) => {\n84 |         const url = '/api/login';\n85 | -->     const apiKey = 'CB-PROD-SECRET-KEY-2024';\n86 |         return axios.post(url, creds, { headers: { 'Authorization': apiKey } });",
+      "priority_score": 20,
+      "ai_explanation": "This issue was detected by eslint. AI reasoning is currently unavailable, so this finding is based on standard rules."
+    }
+  ],
+  "quick_wins": [],
+  "top_risks": [],
+  "analysis_strategy": "rule-based (fallback)",
+  "message": "Review generated using static rules (AI offline)."
+}

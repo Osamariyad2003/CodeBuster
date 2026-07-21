@@ -1,0 +1,5 @@
+# Optional: Microsoft CodeReviewer (CodeBERT) integration.
+# Install with: pip install -r requirements-codereviewer.txt
+# Then set CODEREVIEWER_ENABLED=1 in .env to enable.
+torch>=1.9.0
+transformers>=4.15.0
