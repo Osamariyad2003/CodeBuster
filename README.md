@@ -4,6 +4,18 @@ CodeBuster is an AI-powered code review and engineering health dashboard for Git
 
 This project is prepared for the OpenAI Build Week Devpost challenge in the **Developer Tools** track.
 
+## Contents
+
+- [What It Does](#what-it-does)
+- [Build Week Fit](#build-week-fit)
+- [Codex and GPT-5.6 Usage](#codex-and-gpt-56-usage)
+- [Tech Stack](#tech-stack)
+- [Quick Start](#quick-start)
+- [Useful Commands](#useful-commands)
+- [Project Structure](#project-structure)
+- [Demo Path](#demo-path)
+- [Repository Notes](#repository-notes)
+
 ## What It Does
 
 - Connect GitHub repositories through OAuth or a GitHub App.
@@ -48,6 +60,21 @@ The service gracefully falls back to deterministic explanations when no AI provi
 - **Analysis:** CodeQL, SonarQube, Semgrep, TruffleHog, Ruff/linting, dependency/dead-code/duplicate-code/performance analyzers
 - **AI layer:** Provider abstraction for Vertex/Gemini/Anthropic/OpenRouter/Groq/OpenAI, plus rule-based fallback
 
+## Project Structure
+
+```
+CodeBuster/
+├── backend/               # Flask app (entry: main.py), routes/, services/, models/, tasks/
+├── frontend/              # React 18 + Vite SPA (src/pages, src/components)
+├── workers/               # Async job workers used alongside Celery
+├── webhook_ingestor/      # GitHub webhook intake service
+├── webhook_orchestrator/  # Webhook-to-review orchestration
+├── codeql-packs/          # Bundled CodeQL query packs
+├── docs/                  # Architecture, API, and setup references
+├── docker-compose.yml, Dockerfile
+└── README-SCAFFOLD.md, infra/, services/, src/  # Older scaffold/microservice references
+```
+
 ## Quick Start
 
 ### 1. Backend
@@ -60,18 +87,9 @@ pip install -r requirements.txt
 Copy-Item config_template.env .env
 ```
 
-Edit `backend/.env` and set at least:
+Edit `backend/.env` and fill in your own values for `FLASK_SECRET_KEY`, `DATABASE_URL`, and `REDIS_URL` — full list and defaults are in `backend/config_template.env`.
 
-```env
-FLASK_SECRET_KEY=local-dev-secret
-GITHUB_APP_ID=12345
-GITHUB_WEBHOOK_SECRET=local-webhook-secret
-DATABASE_URL=sqlite:///codebuster.db
-REDIS_URL=redis://localhost:6379/0
-FRONTEND_URL=http://localhost:5174
-```
-
-For GitHub login and repository access, also set the GitHub OAuth/App values documented in `backend/GITHUB_APP_SETUP.md`.
+For GitHub login and repository access, set the GitHub OAuth/App values documented in `backend/GITHUB_APP_SETUP.md`.
 
 Start the backend:
 
