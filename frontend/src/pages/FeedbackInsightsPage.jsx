@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Container, Row, Col, Card, Alert, Form } from 'react-bootstrap';
-import { FaCommentDots, FaThumbsDown, FaExclamationTriangle } from 'react-icons/fa';
+import { FaCommentDots, FaThumbsDown, FaExclamationTriangle, FaChevronDown, FaChevronRight } from 'react-icons/fa';
 import {
-    ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
+    ResponsiveContainer, BarChart, Bar, Cell, XAxis, YAxis, CartesianGrid, Tooltip,
     LineChart, Line, Legend,
 } from 'recharts';
 import ChartCard from '../components/charts/ChartCard';
@@ -12,6 +13,35 @@ import { getFeedbackStats } from '../lib/apiClient';
 const DAYS_OPTIONS = [7, 30, 90];
 
 const pct = (n) => `${Math.round((n || 0) * 100)}%`;
+
+// Trend dates come back as 'YYYY-MM-DD'; render them short ("Aug 8") so the
+// x-axis stays readable at the 90-day range instead of wrapping full ISO dates.
+const formatDay = (key) => {
+    if (!key || key === 'unknown') return key;
+    const d = new Date(`${key}T00:00:00`);
+    return Number.isNaN(d.getTime()) ? key : d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+};
+
+// Always-visible dot (rather than the default hover-only dot) so a single day
+// of data still renders as a visible point instead of an empty-looking chart.
+// Days below the trust threshold are shown smaller/fainter, mirroring the
+// low_sample treatment used elsewhere on this page.
+const TrendDot = (props) => {
+    const { cx, cy, payload } = props;
+    if (cx == null || cy == null) return null;
+    const lowSample = payload?.low_sample;
+    return (
+        <circle
+            cx={cx}
+            cy={cy}
+            r={lowSample ? 3 : 4}
+            fill="var(--primary-brand, #3b82f6)"
+            fillOpacity={lowSample ? 0.4 : 1}
+            stroke="var(--surface-card, #fff)"
+            strokeWidth={1}
+        />
+    );
+};
 
 const StatCard = ({ icon: Icon, label, value, sub, loading }) => (
     <Card className="h-100 shadow-sm" style={{ border: '1px solid var(--border-subtle, #e9ecef)', borderRadius: '12px' }}>
@@ -39,6 +69,7 @@ const StatCard = ({ icon: Icon, label, value, sub, loading }) => (
 
 const FeedbackInsightsPage = () => {
     const [days, setDays] = useState(30);
+    const [expandedCategory, setExpandedCategory] = useState(null);
     const [stats, setStats] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -135,8 +166,21 @@ const FeedbackInsightsPage = () => {
                                     <CartesianGrid strokeDasharray="3 3" horizontal={false} />
                                     <XAxis type="number" domain={[0, 1]} tickFormatter={pct} fontSize={11} />
                                     <YAxis type="category" dataKey="key" width={100} fontSize={11} />
-                                    <Tooltip formatter={(v, name, props) => [pct(v), `dismiss rate (${props.payload.total} total)`]} />
-                                    <Bar dataKey="dismiss_rate" fill="var(--color-danger, #dc3545)" radius={[0, 4, 4, 0]} />
+                                    <Tooltip formatter={(v, name, props) => [
+                                        pct(v),
+                                        props.payload.low_sample
+                                            ? `dismiss rate (${props.payload.total} total — too few samples to trust)`
+                                            : `dismiss rate (${props.payload.total} total)`,
+                                    ]} />
+                                    <Bar dataKey="dismiss_rate" radius={[0, 4, 4, 0]}>
+                                        {byModule.map((entry) => (
+                                            <Cell
+                                                key={entry.key}
+                                                fill="var(--color-danger, #dc3545)"
+                                                fillOpacity={entry.low_sample ? 0.35 : 1}
+                                            />
+                                        ))}
+                                    </Bar>
                                 </BarChart>
                             </ResponsiveContainer>
                         )}
@@ -145,7 +189,7 @@ const FeedbackInsightsPage = () => {
                 <Col md={6}>
                     <ChartCard
                         title="Dismiss rate over time"
-                        tooltip="Daily share of findings dismissed or ignored."
+                        tooltip="Daily share of findings dismissed or ignored. Faint dots mark days with too few samples (<5) to trust."
                         loading={loading}
                         height={280}
                     >
@@ -154,16 +198,41 @@ const FeedbackInsightsPage = () => {
                                 No feedback data available
                             </div>
                         ) : (
-                            <ResponsiveContainer width="100%" height={280}>
-                                <LineChart data={trend}>
-                                    <CartesianGrid strokeDasharray="3 3" />
-                                    <XAxis dataKey="key" fontSize={11} />
-                                    <YAxis domain={[0, 1]} tickFormatter={pct} fontSize={11} />
-                                    <Tooltip formatter={(v) => pct(v)} />
-                                    <Legend />
-                                    <Line type="monotone" dataKey="dismiss_rate" name="Dismiss rate" stroke="var(--primary-brand, #3b82f6)" strokeWidth={2} dot={false} />
-                                </LineChart>
-                            </ResponsiveContainer>
+                            <>
+                                <ResponsiveContainer width="100%" height={trend.length < 3 ? 240 : 280}>
+                                    <LineChart data={trend} margin={{ left: 4, right: 12 }}>
+                                        <CartesianGrid strokeDasharray="3 3" />
+                                        <XAxis dataKey="key" fontSize={11} tickFormatter={formatDay} />
+                                        <YAxis domain={[0, 1]} tickFormatter={pct} fontSize={11} />
+                                        <Tooltip
+                                            labelFormatter={formatDay}
+                                            formatter={(v, name, props) => [
+                                                pct(v),
+                                                props.payload.low_sample
+                                                    ? `dismiss rate (${props.payload.total} total — too few samples to trust)`
+                                                    : `dismiss rate (${props.payload.total} total)`,
+                                            ]}
+                                        />
+                                        <Legend />
+                                        <Line
+                                            type="monotone"
+                                            dataKey="dismiss_rate"
+                                            name="Dismiss rate"
+                                            stroke="var(--primary-brand, #3b82f6)"
+                                            strokeWidth={2}
+                                            dot={<TrendDot />}
+                                            activeDot={{ r: 5 }}
+                                            isAnimationActive={trend.length > 1}
+                                        />
+                                    </LineChart>
+                                </ResponsiveContainer>
+                                {trend.length < 3 && (
+                                    <div className="text-muted text-center" style={{ fontSize: '0.75rem', marginTop: 4 }}>
+                                        Only {trend.length} day{trend.length === 1 ? '' : 's'} of feedback so far — the trend will
+                                        take shape as more findings get reviewed.
+                                    </div>
+                                )}
+                            </>
                         )}
                     </ChartCard>
                 </Col>
@@ -179,27 +248,80 @@ const FeedbackInsightsPage = () => {
                     ) : disputedCategories.length === 0 ? (
                         <div className="text-muted text-center" style={{ padding: 32 }}>No feedback data available</div>
                     ) : (
-                        <div style={{ overflowX: 'auto' }}>
+        <div style={{ overflowX: 'auto' }}>
                             <table className="table mb-0" style={{ fontSize: '0.85rem' }}>
                                 <thead>
                                     <tr>
+                                        <th style={{ width: 24, padding: '10px 8px' }}></th>
                                         <th style={{ padding: '10px 16px' }}>Category</th>
                                         <th>Total feedback</th>
                                         <th>Dismissed</th>
                                         <th>Dismiss rate</th>
+                                        <th>Where</th>
                                         <th>Sample comment</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {disputedCategories.map((c) => (
-                                        <tr key={c.category}>
+                                    {disputedCategories.map((c) => {
+                                        const isOpen = expandedCategory === c.category;
+                                        const hasLocations = (c.sample_locations || []).length > 0;
+                                        return (
+                                        <React.Fragment key={c.category}>
+                                        <tr
+                                            style={{
+                                                ...(c.low_sample ? { opacity: 0.55 } : undefined),
+                                                cursor: hasLocations ? 'pointer' : 'default',
+                                            }}
+                                            onClick={() => hasLocations && setExpandedCategory(isOpen ? null : c.category)}
+                                        >
+                                            <td style={{ padding: '10px 8px', color: 'var(--text-muted, #6c757d)' }}>
+                                                {hasLocations && (isOpen ? <FaChevronDown size={11} /> : <FaChevronRight size={11} />)}
+                                            </td>
                                             <td style={{ padding: '10px 16px', fontWeight: 600 }}>{c.category}</td>
                                             <td>{c.total}</td>
                                             <td>{c.dismissed}</td>
-                                            <td>{pct(c.dismiss_rate)}</td>
+                                            <td>
+                                                {pct(c.dismiss_rate)}
+                                                {c.low_sample && (
+                                                    <span
+                                                        className="text-muted ms-1"
+                                                        style={{ fontSize: '0.72rem' }}
+                                                        title={`Only ${c.total} sample${c.total === 1 ? '' : 's'} — too few to trust yet`}
+                                                    >
+                                                        (low n)
+                                                    </span>
+                                                )}
+                                            </td>
+                                            <td className="text-muted">
+                                                {hasLocations
+                                                    ? `${c.affected_files} file${c.affected_files === 1 ? '' : 's'}`
+                                                    : '—'}
+                                            </td>
                                             <td className="text-muted">{c.sample_comments?.[0] || '—'}</td>
                                         </tr>
-                                    ))}
+                                        {isOpen && hasLocations && (
+                                            <tr>
+                                                <td></td>
+                                                <td colSpan={6} style={{ padding: '4px 16px 12px', background: 'var(--surface-muted, #f8f9fa)' }}>
+                                                    <div className="text-muted mb-1" style={{ fontSize: '0.72rem' }}>
+                                                        Dismissed findings in this category — jump to the review to see them in context:
+                                                    </div>
+                                                    <ul className="mb-0" style={{ paddingLeft: 18 }}>
+                                                        {c.sample_locations.map((loc) => (
+                                                            <li key={loc.issue_id}>
+                                                                <Link to={`/reviews/${loc.review_id}`} title={loc.title}>
+                                                                    {loc.file_path}
+                                                                    {loc.line_number ? `:${loc.line_number}` : ''}
+                                                                </Link>
+                                                            </li>
+                                                        ))}
+                                                    </ul>
+                                                </td>
+                                            </tr>
+                                        )}
+                                        </React.Fragment>
+                                        );
+                                    })}
                                 </tbody>
                             </table>
                         </div>

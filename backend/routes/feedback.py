@@ -26,27 +26,34 @@ def submit_feedback():
         data = request.get_json()
         issue_id = data.get('issue_id')
         review_id = data.get('review_id')
-        action = data.get('action')  # accept, dismiss, resolve, ignore
+        action = data.get('action')  # accept, dismiss, resolve, ignore, reset
         comment = data.get('comment', '')
-        
+
         if not issue_id or not review_id or not action:
             return jsonify({"error": "Missing required fields"}), 400
-        
-        if action not in ['accept', 'dismiss', 'resolve', 'ignore']:
+
+        if action not in ['accept', 'dismiss', 'resolve', 'ignore', 'reset']:
             return jsonify({"error": "Invalid action"}), 400
-        
+
         # Verify issue and review exist
         issue = Issue.query.get(issue_id)
         if not issue:
             return jsonify({"error": "Issue not found"}), 404
-        
+
         review = Review.query.get(review_id)
         if not review:
             return jsonify({"error": "Review not found"}), 404
-        
+
         # Get user ID from session
         user_id = session.get('user', {}).get('id')
-        
+
+        # 'reset' undoes prior accept/dismiss feedback: clear the issue's status
+        # without recording a feedback row (it isn't a quality signal itself).
+        if action == 'reset':
+            issue.status = 'open'
+            db.session.commit()
+            return jsonify({"success": True, "feedback": None})
+
         # Update issue status based on action
         if action == 'accept' or action == 'resolve':
             issue.status = 'resolved'
@@ -54,7 +61,7 @@ def submit_feedback():
             issue.status = 'dismissed'
         else:
             issue.status = 'open'
-            
+
         # Create feedback
         feedback = Feedback(
             id=str(uuid.uuid4()),
@@ -64,10 +71,10 @@ def submit_feedback():
             action=action,
             comment=comment
         )
-        
+
         db.session.add(feedback)
         db.session.commit()
-        
+
         return jsonify({
             "success": True,
             "feedback": feedback.to_dict()
@@ -79,6 +86,25 @@ def submit_feedback():
 
 DISMISS_ACTIONS = {'dismiss', 'ignore'}
 POSITIVE_ACTIONS = {'accept', 'resolve'}
+
+# Below this many samples, a dismiss rate is too noisy to trust (e.g. 1/1 = "100%
+# dismissed" off a single click). Stats with fewer samples than this are still
+# returned but flagged `low_sample` so the UI can gray them out / caveat them.
+MIN_TRUSTED_SAMPLES = 5
+
+
+def _normalize_confidence(c):
+    """Issue.confidence is documented as 0.00-1.00 but a handful of analyzers
+    (e.g. performance_analyzer) write 0-100 scores into the same column. Mirror
+    the normalization AIReviewService already does when scoring, so confidence
+    buckets here aren't silently wrong for those rows."""
+    if c is None:
+        return None
+    try:
+        c = float(c)
+    except (TypeError, ValueError):
+        return None
+    return c / 100.0 if c > 1.0 else c
 
 
 @feedback_bp.route('/stats', methods=['GET'])
@@ -105,9 +131,10 @@ def get_feedback_stats():
         by_tool = defaultdict(lambda: {'total': 0, 'dismissed': 0})
         by_confidence = defaultdict(lambda: {'total': 0, 'dismissed': 0})
         by_day = defaultdict(lambda: {'total': 0, 'dismissed': 0})
-        disputed_categories = defaultdict(lambda: {'total': 0, 'dismissed': 0, 'comments': []})
+        disputed_categories = defaultdict(lambda: {'total': 0, 'dismissed': 0, 'comments': [], 'locations': []})
 
         def bucket_confidence(c):
+            c = _normalize_confidence(c)
             if c is None:
                 return 'unknown'
             if c < 0.4:
@@ -135,12 +162,25 @@ def get_feedback_stats():
                 disputed_categories[category]['dismissed'] += 1
                 if f.comment:
                     disputed_categories[category]['comments'].append(f.comment)
+                # Where the dismissed findings actually are, so "most disputed
+                # category" points at real files instead of just a stat.
+                if issue.file_path:
+                    disputed_categories[category]['locations'].append({
+                        'issue_id': issue.id,
+                        'review_id': f.review_id,
+                        'file_path': issue.file_path,
+                        'line_number': issue.line_number,
+                        'title': issue.title,
+                    })
 
         def with_rate(d):
             out = []
             for key, v in d.items():
                 rate = round(v['dismissed'] / v['total'], 3) if v['total'] else 0
-                out.append({**{'key': key}, **v, 'dismiss_rate': rate})
+                out.append({
+                    **{'key': key}, **v, 'dismiss_rate': rate,
+                    'low_sample': v['total'] < MIN_TRUSTED_SAMPLES,
+                })
             return out
 
         module_stats = sorted(with_rate(by_module), key=lambda x: -x['total'])
@@ -151,16 +191,32 @@ def get_feedback_stats():
         category_stats = []
         for key, v in disputed_categories.items():
             rate = round(v['dismissed'] / v['total'], 3) if v['total'] else 0
+            # Dedup locations by file (keep the first occurrence, which has the
+            # earliest-seen issue/line for that file) so a file with several
+            # dismissed findings doesn't repeat itself in the sample list.
+            seen_files = set()
+            unique_locations = []
+            for loc in v['locations']:
+                if loc['file_path'] in seen_files:
+                    continue
+                seen_files.add(loc['file_path'])
+                unique_locations.append(loc)
             category_stats.append({
                 'category': key,
                 'total': v['total'],
                 'dismissed': v['dismissed'],
                 'dismiss_rate': rate,
+                'low_sample': v['total'] < MIN_TRUSTED_SAMPLES,
                 'sample_comments': v['comments'][:3],
+                'affected_files': len(seen_files),
+                'sample_locations': unique_locations[:5],
             })
         category_stats.sort(key=lambda x: (-x['dismiss_rate'], -x['total']))
 
-        top_disputed = category_stats[0]['category'] if category_stats else None
+        # Prefer a trusted (non-low-sample) category for the headline stat so a
+        # single dismissed finding doesn't get crowned "most disputed category".
+        trusted = [c for c in category_stats if not c['low_sample']]
+        top_disputed = (trusted or category_stats)[0]['category'] if category_stats else None
 
         return jsonify({
             "success": True,

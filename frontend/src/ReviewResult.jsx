@@ -84,7 +84,8 @@ const ReviewComment = ({ comment, reviewId }) => {
   const handleFeedback = async (action) => {
     try {
       await apiClient.post(`/api/feedback`, { action, review_id: reviewId, issue_id: comment.id });
-      setFeedback(action);
+      // 'reset' undoes prior feedback rather than recording a new state.
+      setFeedback(action === 'reset' ? null : action);
     } catch (e) { console.error('Feedback failed:', e); }
   };
 
@@ -136,7 +137,7 @@ const ReviewComment = ({ comment, reviewId }) => {
                 <Button variant="link" size="sm" className="p-0 text-success" onClick={() => handleFeedback('accept')}><FaCheck /></Button>
                 <Button variant="link" size="sm" className="p-0 text-muted" onClick={() => handleFeedback('dismiss')}><FaTimes /></Button>
               </>
-            ) : <Button variant="link" size="sm" className="p-0 text-muted" onClick={() => handleFeedback(null)}><FaUndo /></Button>}
+            ) : <Button variant="link" size="sm" className="p-0 text-muted" onClick={() => handleFeedback('reset')}><FaUndo /></Button>}
           </div>
         </div>
 

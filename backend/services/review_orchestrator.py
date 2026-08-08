@@ -334,7 +334,17 @@ class ReviewOrchestrator:
         print("[SEARCH] STEP 3.5: Extracting code snippets for AI context...")
         print("=" * 60)
         deduplicated = self._extract_snippets_for_findings(deduplicated, files)
-        
+
+        # Step 3.6: Trust-adjust confidence using reviewer feedback history.
+        # Modules reviewers chronically dismiss (see the Finding Quality page)
+        # get their confidence damped so they contribute less to prioritization
+        # and the health-score penalty, without being silenced outright.
+        try:
+            from .finding_trust_service import apply_trust_adjustment
+            deduplicated = apply_trust_adjustment(deduplicated)
+        except Exception as e:
+            print(f"   [INFO]️ Trust adjustment skipped: {e}")
+
         # Step 4: AI reasoning (after CodeQL and all analyzers)
         print("\n" + "=" * 60)
         print("[BOT] STEP 4: Running AI reasoning on all findings (CodeQL + analyzers)...")
