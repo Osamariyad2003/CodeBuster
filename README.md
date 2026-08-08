@@ -139,18 +139,7 @@ $env:PYTHONPATH = (Resolve-Path ..).Path
 python -m pytest tests -q
 ```
 
-## Demo Path
 
-Use the short recording script in [docs/DEMO_SCRIPT.md](docs/DEMO_SCRIPT.md).
-
-The recommended demo flow is:
-
-1. Show the landing page and GitHub connection.
-2. Open a repository dashboard.
-3. Run or open a completed review.
-4. Show the health score, category breakdown, AI executive summary, and findings.
-5. Open one finding to show evidence, snippet context, AI explanation, and suggested fix.
-6. Show the Fix Sprint or Agents page to demonstrate how CodeBuster turns review results into action.
 
 ## Repository Notes
 
