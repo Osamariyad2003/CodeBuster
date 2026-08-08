@@ -12,7 +12,6 @@ import {
 } from "react-bootstrap";
 import {
   FaGithub,
-  FaRobot,
   FaInbox,
   FaCog,
   FaSearch,
@@ -155,17 +154,8 @@ const RepoCard: React.FC<RepoCardProps> = ({ repo, health }) => {
       <div className="d-flex gap-2 mt-auto">
         <Button
           as={Link as any}
-          to={`/agents?repo=${encodeURIComponent(repo.full_name)}`}
-          variant="primary"
-          size="sm"
-          className="flex-grow-1 d-flex align-items-center justify-content-center"
-        >
-          <FaRobot size={12} className="me-1" /> Agents
-        </Button>
-        <Button
-          as={Link as any}
           to={`/commits?repo_id=${encodeURIComponent(repo.id)}`}
-          variant="outline-secondary"
+          variant="primary"
           size="sm"
           className="flex-grow-1 d-flex align-items-center justify-content-center"
         >
