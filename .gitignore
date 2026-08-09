@@ -9,8 +9,6 @@ venv/
 
 
 .claude/
-.github/
-docs/
 
 # Node / Vite
 node_modules/
