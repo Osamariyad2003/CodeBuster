@@ -308,8 +308,16 @@ const FeedbackInsightsPage = () => {
                                                     </div>
                                                     <ul className="mb-0" style={{ paddingLeft: 18 }}>
                                                         {c.sample_locations.map((loc) => (
-                                                            <li key={loc.issue_id}>
-                                                                <Link to={`/reviews/${loc.review_id}`} title={loc.title}>
+                                                            <li key={loc.issue_id} style={{ marginBottom: 4 }}>
+                                                                <span style={{ fontWeight: 600 }}>{loc.title || 'Untitled finding'}</span>
+                                                                {loc.severity && (
+                                                                    <span className="text-muted"> ({loc.severity})</span>
+                                                                )}
+                                                                <br />
+                                                                {loc.project && (
+                                                                    <span className="text-muted" style={{ fontSize: '0.78rem' }}>{loc.project} — </span>
+                                                                )}
+                                                                <Link to={`/reviews/${loc.review_id}`} style={{ fontSize: '0.78rem' }}>
                                                                     {loc.file_path}
                                                                     {loc.line_number ? `:${loc.line_number}` : ''}
                                                                 </Link>

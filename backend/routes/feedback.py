@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 from collections import defaultdict
 import uuid
 
-from models import db, Feedback, Issue, Review
+from models import db, Feedback, Issue, Review, Repository
 
 feedback_bp = Blueprint('feedback', __name__, url_prefix='/api/feedback')
 
@@ -116,13 +116,22 @@ def get_feedback_stats():
         days = request.args.get('days', 30, type=int)
         since = datetime.utcnow() - timedelta(days=days)
 
-        query = db.session.query(Feedback, Issue).join(Issue, Feedback.issue_id == Issue.id)
+        # Outer-join Review/Repository (rather than requiring them) so a
+        # feedback row with an orphaned review_id still counts toward the
+        # stats -- it just won't have a project name attached.
+        query = (
+            db.session.query(Feedback, Issue, Repository)
+            .join(Issue, Feedback.issue_id == Issue.id)
+            .outerjoin(Review, Feedback.review_id == Review.id)
+            .outerjoin(Repository, Review.repository_id == Repository.id)
+        )
         query = query.filter(Feedback.created_at >= since)
         if repo_id:
-            query = query.join(Review, Feedback.review_id == Review.id)
             query = query.filter(Review.repository_id == repo_id)
 
-        rows = query.all()
+        results = query.all()
+        rows = [(f, issue) for f, issue, _repo in results]
+        repo_by_review = {f.review_id: repo.full_name for f, _issue, repo in results if repo is not None}
 
         total = len(rows)
         dismissed = sum(1 for f, _ in rows if f.action in DISMISS_ACTIONS)
@@ -168,9 +177,11 @@ def get_feedback_stats():
                     disputed_categories[category]['locations'].append({
                         'issue_id': issue.id,
                         'review_id': f.review_id,
+                        'project': repo_by_review.get(f.review_id),
                         'file_path': issue.file_path,
                         'line_number': issue.line_number,
                         'title': issue.title,
+                        'severity': issue.severity,
                     })
 
         def with_rate(d):
@@ -191,15 +202,16 @@ def get_feedback_stats():
         category_stats = []
         for key, v in disputed_categories.items():
             rate = round(v['dismissed'] / v['total'], 3) if v['total'] else 0
-            # Dedup locations by file (keep the first occurrence, which has the
-            # earliest-seen issue/line for that file) so a file with several
-            # dismissed findings doesn't repeat itself in the sample list.
+            # Dedup locations by (project, file) -- keep the first occurrence --
+            # so a file with several dismissed findings doesn't repeat itself,
+            # and same-named files in different projects don't collide.
             seen_files = set()
             unique_locations = []
             for loc in v['locations']:
-                if loc['file_path'] in seen_files:
+                dedup_key = (loc['project'], loc['file_path'])
+                if dedup_key in seen_files:
                     continue
-                seen_files.add(loc['file_path'])
+                seen_files.add(dedup_key)
                 unique_locations.append(loc)
             category_stats.append({
                 'category': key,
