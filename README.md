@@ -7,7 +7,6 @@
 
 **CodeBuster** is an AI-powered code review and engineering-health dashboard for GitHub repositories. It combines deterministic analyzers with an AI senior-engineer reasoning pass to find security risks, performance regressions, dependency issues, dead code, and maintainability problems — then turns them into a single, prioritized, fixable review instead of scattered linter/CI noise.
 
-Prepared for the OpenAI Build Week Devpost challenge, **Developer Tools** track.
 
 ## Demo
 
