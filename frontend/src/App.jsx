@@ -62,6 +62,20 @@ function App() {
               element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <LandingPage />}
             />
 
+            {/*
+              GitHub OAuth callback target (must match backend's redirect_uri in
+              backend/routes/auth.py: `${FRONTEND_URL}/auth/callback`).
+              AuthContext exchanges the code and calls history.replaceState
+              to '/dashboard' or '/' before this ever renders in the normal
+              flow (App shows a loading screen while that's in progress), but
+              this route exists as an explicit, non-404 landing spot for the
+              redirect and as a safety net (e.g. no `code` param present).
+            */}
+            <Route
+              path="/auth/callback"
+              element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Navigate to="/" replace />}
+            />
+
             {/* Authenticated Routes (Wrapped in AppShell) */}
             <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
 

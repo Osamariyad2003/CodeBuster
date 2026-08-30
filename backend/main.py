@@ -25,7 +25,10 @@ app.secret_key = settings.FLASK_SECRET_KEY
 
 # Session configuration
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
-app.config['SESSION_COOKIE_SECURE'] = False
+# Only relax this to False when settings.DEBUG opts into local/dev mode (e.g.
+# plain-HTTP localhost); a real deployment must serve over HTTPS and mark the
+# session cookie Secure so it's never sent in the clear.
+app.config['SESSION_COOKIE_SECURE'] = not settings.DEBUG
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SESSION_PERMANENT'] = True
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=7)
@@ -148,7 +151,7 @@ def ready_check():
 if __name__ == '__main__':
     port = int(os.getenv('PORT', 5000))
     app.run(
-        debug=os.getenv('DEBUG', 'False').lower() == 'true',
+        debug=settings.DEBUG,
         port=port,
         use_reloader=False,
         threaded=True,

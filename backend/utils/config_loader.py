@@ -7,7 +7,10 @@ class Settings(BaseSettings):
     # Flask settings
     FLASK_SECRET_KEY: str = "codebuster-secret-key-change-in-production"
     PORT: int = 5000
-    DEBUG: bool = True
+    # Secure by default: an unconfigured/production deployment must not
+    # accidentally run with Flask's debugger and reloader enabled. Opt into
+    # dev mode explicitly via DEBUG=true (or DEBUG=dev) in the environment/.env.
+    DEBUG: bool = False
     
     # CORS settings
     FRONTEND_URL: str = "http://localhost:5174"

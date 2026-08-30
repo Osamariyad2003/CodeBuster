@@ -15,16 +15,13 @@ GITHUB_CLIENT_ID = os.getenv('GITHUB_CLIENT_ID', '').strip()
 GITHUB_CLIENT_SECRET = os.getenv('GITHUB_CLIENT_SECRET', '').strip()
 FRONTEND_URL = os.getenv('FRONTEND_URL', 'http://localhost:5174').strip()
 
-# DEBUG: Verify credentials are loaded
+# DEBUG: Verify credentials are loaded (booleans only — never print secret values)
 print("=" * 60)
 print("[AUTH] GITHUB OAUTH DEBUG INFO")
 print("=" * 60)
 print(f"[OK] CLIENT_ID loaded: {bool(GITHUB_CLIENT_ID)}")
 print(f"[OK] CLIENT_SECRET loaded: {bool(GITHUB_CLIENT_SECRET)}")
 print(f"[OK] FRONTEND_URL: {FRONTEND_URL}")
-print(f"[OK] CLIENT_ID: {GITHUB_CLIENT_ID}")
-print(f"[OK] CLIENT_SECRET length: {len(GITHUB_CLIENT_SECRET)} chars")
-print(f"[OK] CLIENT_SECRET (first 5): {GITHUB_CLIENT_SECRET[:5]}...")
 print("=" * 60)
 
 if not GITHUB_CLIENT_ID or not GITHUB_CLIENT_SECRET:
@@ -73,7 +70,7 @@ def github_callback():
     print(f"\n{'='*60}")
     print(f"[AUTH] GitHub callback received")
     print(f"{'='*60}")
-    print(f"Code: {code[:20]}..." if code else "Code: None")
+    print(f"Code received: {bool(code)}")
     print(f"Error: {error}")
 
     if error:
@@ -88,9 +85,6 @@ def github_callback():
     try:
         print(f"\n[AUTH] Exchanging code for token...")
         print(f"       Endpoint: https://github.com/login/oauth/access_token")
-        print(f"       CLIENT_ID: {GITHUB_CLIENT_ID}")
-        print(f"       CLIENT_SECRET length: {len(GITHUB_CLIENT_SECRET)}")
-        print(f"       Code: {code[:15]}...")
 
         session_gh = get_github_session()
 
@@ -108,7 +102,7 @@ def github_callback():
         print(f"       Response Status: {token_response.status_code}")
 
         token_data = token_response.json()
-        print(f"       Response: {token_data}")
+        print(f"       Response keys: {sorted(token_data.keys())}")
 
         if 'error' in token_data:
             error_desc = token_data.get('error_description', token_data.get('error'))
