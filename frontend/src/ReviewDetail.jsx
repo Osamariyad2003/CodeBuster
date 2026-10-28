@@ -132,8 +132,8 @@ export default function ReviewDetail() {
             </div>
 
             {/* Score overview */}
-            <Card className="border-0 shadow-sm mb-4">
-                <Card.Header className="bg-white py-3 fw-bold d-flex align-items-center gap-2">
+            <Card className="shadow-sm mb-4" style={{ background: 'var(--surface-card, #0E1118)', border: '1px solid var(--border-default, rgba(255, 255, 255, 0.08))', borderRadius: 14 }}>
+                <Card.Header className="py-3 fw-bold d-flex align-items-center gap-2">
                     <FaChartLine /> Score overview
                 </Card.Header>
                 <Card.Body>
@@ -168,8 +168,8 @@ export default function ReviewDetail() {
 
             {/* Analyzers */}
             {(analyzers?.length > 0 || legacy?.extra_metadata?.analyzers_run?.length > 0) && (
-                <Card className="border-0 shadow-sm mb-4">
-                    <Card.Header className="bg-white py-3 fw-bold">Analyzers</Card.Header>
+                <Card className="shadow-sm mb-4" style={{ background: 'var(--surface-card, #0E1118)', border: '1px solid var(--border-default, rgba(255, 255, 255, 0.08))', borderRadius: 14 }}>
+                    <Card.Header className="py-3 fw-bold">Analyzers</Card.Header>
                     <Card.Body>
                         <AnalyzerStatusList analyzers={analyzers || legacy?.extra_metadata} />
                     </Card.Body>
@@ -177,8 +177,8 @@ export default function ReviewDetail() {
             )}
 
             {/* Findings */}
-            <Card className="border-0 shadow-sm mb-4">
-                <Card.Header className="bg-white py-3 fw-bold d-flex align-items-center gap-2">
+            <Card className="shadow-sm mb-4" style={{ background: 'var(--surface-card, #0E1118)', border: '1px solid var(--border-default, rgba(255, 255, 255, 0.08))', borderRadius: 14 }}>
+                <Card.Header className="py-3 fw-bold d-flex align-items-center gap-2">
                     <FaListUl /> Findings
                 </Card.Header>
                 <Card.Body>
@@ -186,7 +186,7 @@ export default function ReviewDetail() {
                         <p className="text-muted mb-0">No findings. This scan is clean.</p>
                     ) : (
                         <Table hover responsive size="sm">
-                            <thead className="table-light">
+                            <thead style={{ background: 'var(--surface-card-elevated)' }}>
                                 <tr>
                                     <th>Severity</th>
                                     <th>Title</th>
@@ -208,7 +208,7 @@ export default function ReviewDetail() {
                                         >
                                             <td>{severityBadge(f.severity)}</td>
                                             <td className="text-truncate" style={{ maxWidth: 280 }}>{f.title || 'Finding'}</td>
-                                            <td><Badge bg="light" text="dark">{f.dimension || f.category || '—'}</Badge></td>
+                                            <td><Badge bg="secondary" className="border border-secondary-subtle">{f.dimension || f.category || '—'}</Badge></td>
                                             <td className="text-truncate small" style={{ maxWidth: 180 }}>{file || '—'}</td>
                                             <td>{conf}</td>
                                             <td><Button variant="link" size="sm" className="p-0">Details</Button></td>
@@ -223,7 +223,7 @@ export default function ReviewDetail() {
 
             {/* Next actions / Top risks */}
             {((summary?.next_actions?.length > 0) || (summary?.top_risks?.length > 0)) && (
-                <Card className="border-0 shadow-sm mb-4 bg-light">
+                <Card className="shadow-sm mb-4" style={{ background: 'var(--surface-card-elevated)', border: '1px solid var(--border-default, rgba(255, 255, 255, 0.08))', borderRadius: 14 }}>
                     <Card.Header className="py-3 fw-bold">Next actions</Card.Header>
                     <Card.Body>
                         <ul className="mb-0">

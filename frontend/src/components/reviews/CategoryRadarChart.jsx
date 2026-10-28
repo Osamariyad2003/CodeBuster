@@ -54,21 +54,21 @@ export default function CategoryRadarChart({ categories = [], height = 280 }) {
                 <RadarChart cx="50%" cy="50%" outerRadius="68%" data={data}>
                     <defs>
                         <linearGradient id="radarFill" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0%" stopColor="#6366F1" stopOpacity={0.5} />
-                            <stop offset="100%" stopColor="#4F46E5" stopOpacity={0.15} />
+                            <stop offset="0%" stopColor="#FF570A" stopOpacity={0.45} />
+                            <stop offset="100%" stopColor="#FF7A30" stopOpacity={0.12} />
                         </linearGradient>
                     </defs>
-                    <PolarGrid stroke="rgba(148,163,184,0.2)" />
+                    <PolarGrid stroke="rgba(148,163,184,0.15)" />
                     <PolarAngleAxis dataKey="subject" tick={<CustomTick />} />
                     <PolarRadiusAxis angle={90} domain={[0, 100]} tick={false} axisLine={false} tickCount={4} />
                     <Radar
                         name="Score"
                         dataKey="score"
-                        stroke="#6366F1"
+                        stroke="#FF570A"
                         strokeWidth={2}
                         fill="url(#radarFill)"
-                        dot={{ r: 3, fill: '#6366F1', strokeWidth: 0 }}
-                        activeDot={{ r: 5, fill: '#6366F1', stroke: '#fff', strokeWidth: 2 }}
+                        dot={{ r: 3, fill: '#FF570A', strokeWidth: 0 }}
+                        activeDot={{ r: 5, fill: '#FF570A', stroke: '#fff', strokeWidth: 2 }}
                     />
                     <Tooltip content={<CustomTooltip />} />
                 </RadarChart>

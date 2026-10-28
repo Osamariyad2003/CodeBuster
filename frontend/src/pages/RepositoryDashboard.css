@@ -70,12 +70,12 @@
     position: absolute;
     top: 0; left: 0; right: 0;
     height: 2px;
-    background: var(--accent-gradient, linear-gradient(90deg, #6366F1, #8B5CF6));
+    background: var(--accent-gradient, linear-gradient(90deg, #FF570A, #FF7A30));
     opacity: 0;
     transition: opacity 0.2s;
 }
 .dash-stat-card:hover {
-    border-color: rgba(99,102,241,0.4);
+    border-color: rgba(255, 87, 10, 0.4);
     box-shadow: 0 4px 20px rgba(0,0,0,0.35);
     transform: translateY(-2px);
 }
@@ -125,7 +125,7 @@
     color: var(--text-secondary, #8B949E);
 }
 .dash-section-icon {
-    color: #6366F1;
+    color: #FF570A;
 }
 
 /* ── Insight banner ─────────────────────────────────────────── */
@@ -152,14 +152,14 @@
     color: #FCD34D;
 }
 .dash-insight-good {
-    background: rgba(16,185,129,0.1);
-    border-color: rgba(16,185,129,0.3);
-    color: #6EE7B7;
+    background: rgba(37,226,168,0.1);
+    border-color: rgba(37,226,168,0.3);
+    color: #25E2A8;
 }
 .dash-insight-neutral {
-    background: rgba(99,102,241,0.1);
-    border-color: rgba(99,102,241,0.3);
-    color: #A5B4FC;
+    background: rgba(255,87,10,0.1);
+    border-color: rgba(255,87,10,0.3);
+    color: #FF7A30;
 }
 
 /* ── Divider ────────────────────────────────────────────────── */
@@ -203,12 +203,12 @@
     background: transparent !important;
 }
 .repo-dashboard-tabs .nav-link:hover {
-    color: #818CF8;
-    background: rgba(99,102,241,0.06) !important;
+    color: #FF7A30;
+    background: rgba(255,87,10,0.06) !important;
 }
 .repo-dashboard-tabs .nav-link.active {
-    color: #818CF8 !important;
-    border-bottom-color: #6366F1 !important;
+    color: #FF570A !important;
+    border-bottom-color: #FF570A !important;
     background: transparent !important;
 }
 

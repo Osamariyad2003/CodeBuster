@@ -111,7 +111,7 @@ export default function EnrichedReviewView({ data, viewMode = "table" }: Enriche
       {filters}
       {(viewMode === "table" || viewMode === "both") && (
         <Table hover responsive size="sm" className="mb-4">
-          <thead className="table-light">
+          <thead style={{ background: 'var(--surface-card-elevated)', color: 'var(--text-muted)' }}>
             <tr>
               <th>Severity</th>
               <th>Rule</th>
@@ -137,7 +137,7 @@ export default function EnrichedReviewView({ data, viewMode = "table" }: Enriche
                 <td>{issue.effort_minutes != null ? `${issue.effort_minutes} min` : "—"}</td>
                 <td>
                   {(issue.tags || []).slice(0, 3).map((t) => (
-                    <Badge key={t} bg="light" text="dark" className="me-1">
+                    <Badge key={t} bg="secondary" className="me-1 border border-secondary-subtle">
                       {t}
                     </Badge>
                   ))}
@@ -169,7 +169,7 @@ export default function EnrichedReviewView({ data, viewMode = "table" }: Enriche
                 {issue.ai_explanation && (
                   <div className="mb-2">
                     <strong className="d-block small mb-1">AI Explanation:</strong>
-                    <div className="small text-muted p-2 bg-light rounded border-start border-4 border-info">
+                    <div className="small text-muted p-2 rounded border-start border-4 border-info" style={{ background: 'var(--surface-card-elevated)', border: '1px solid var(--border-default)' }}>
                       {issue.ai_explanation}
                     </div>
                   </div>
@@ -205,7 +205,7 @@ export default function EnrichedReviewView({ data, viewMode = "table" }: Enriche
                 {(issue.tags || []).length > 0 && (
                   <div className="mt-2">
                     {(issue.tags || []).map((t) => (
-                      <Badge key={t} bg="light" text="dark" className="me-1">
+                      <Badge key={t} bg="secondary" className="me-1 border border-secondary-subtle">
                         {t}
                       </Badge>
                     ))}

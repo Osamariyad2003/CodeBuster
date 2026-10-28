@@ -23,7 +23,7 @@ def generate_app_jwt():
     payload = {
         'iat': now - timedelta(seconds=60), # Clock skew
         'exp': now + timedelta(minutes=5),
-        'iss': int(github_app_id)
+        'iss': str(github_app_id)
     }
     return jwt.encode(payload, private_key, algorithm='RS256')
 
@@ -51,7 +51,7 @@ def get_installation_access_token(installation_id, force_refresh: bool = False):
             if cached_token:
                 return cached_token
     except Exception as e:
-        print(f"[WARN]️ Redis error in auth: {e}")
+        print(f"[WARN] Redis error in auth: {e}")
         # Continue without cache if redis fails
 
     app_jwt = generate_app_jwt()
@@ -79,7 +79,7 @@ def get_installation_access_token(installation_id, force_refresh: bool = False):
                 expires_at_epoch = int(dt.timestamp())
                 set_installation_token(redis_client, installation_id, token, expires_at_epoch)
         except Exception as e:
-            print(f"[WARN]️ Failed to cache token: {e}")
+            print(f"[WARN] Failed to cache token: {e}")
             
         return token
     print(f"[ERR] Failed to get access token: {response.text}")

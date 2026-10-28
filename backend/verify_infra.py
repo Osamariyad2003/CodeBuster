@@ -40,7 +40,7 @@ def verify_all():
         }
         task = process_github_event.delay(test_payload)
         print(f"[OK] Celery Task Enqueued: {task.id}")
-        print(f"[INFO]️ Status: {task.status}")
+        print(f"[INFO] Status: {task.status}")
         print("\nSUCCESS: Worker nodes should see and process this job.")
     except Exception as e:
         print(f"[ERR] Celery Enqueue Failed: {e}")

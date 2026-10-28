@@ -33,7 +33,8 @@ structlog.configure(
 logger = structlog.get_logger()
 
 # Initialize Rate Limiter
-limiter = Limiter(key_func=get_remote_address, storage_uri=REDIS_URL)
+storage_uri = "memory://" if os.getenv("TESTING") == "true" or not REDIS_URL or "memory" in REDIS_URL else REDIS_URL
+limiter = Limiter(key_func=get_remote_address, storage_uri=storage_uri)
 app = FastAPI(title="GitHub Webhook Ingestor")
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
@@ -105,7 +106,7 @@ async def github_webhook(
     
     log_context = {
         "delivery_id": x_github_delivery,
-        "event": x_github_event,
+        "github_event": x_github_event,
         "repository": repo_full_name,
         "request_id": request.state.request_id
     }

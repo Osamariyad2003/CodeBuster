@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
+  <defs>
+    <linearGradient id="cbFavBody" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FF7A30" />
+      <stop offset="100%" stop-color="#FF570A" />
+    </linearGradient>
+    <linearGradient id="cbFavMint" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#25E2A8" />
+      <stop offset="100%" stop-color="#00FFAA" />
+    </linearGradient>
+  </defs>
+
+  <!-- Rabbit Head Silhouette -->
+  <path
+    d="M 9.5 2.5 C 10.8 2.5 12 3.8 12.5 6 L 14 13 C 14.6 12.4 15.3 12 16 12 C 16.7 12 17.4 12.4 18 13 L 19.5 6 C 20 3.8 21.2 2.5 22.5 2.5 C 24 2.5 25.2 3.9 24.8 6.5 L 23.5 14.5 C 25.8 16.2 27 19 27 22 C 27 26.2 23.5 29.5 16 29.5 C 8.5 29.5 5 26.2 5 22 C 5 19 6.2 16.2 8.5 14.5 L 7.2 6.5 C 6.8 3.9 8 2.5 9.5 2.5 Z"
+    fill="url(#cbFavBody)"
+  />
+
+  <!-- Inner Ear Depth -->
+  <path
+    d="M 9.5 5.5 C 10.2 5.5 10.8 6.2 11 7.2 L 12.2 11.8 C 11.5 11.2 10.5 10.8 9.5 10.8 C 8.5 10.8 7.8 11.2 7.2 11.8 L 8 7.2 C 8.2 6.2 8.8 5.5 9.5 5.5 Z"
+    fill="#B83800"
+  />
+  <path
+    d="M 22.5 5.5 C 23.2 5.5 23.8 6.2 24 7.2 L 24.8 11.8 C 24.2 11.2 23.5 10.8 22.5 10.8 C 21.5 10.8 20.5 11.2 19.8 11.8 L 21 7.2 C 21.2 6.2 21.8 5.5 22.5 5.5 Z"
+    fill="#B83800"
+  />
+
+  <!-- Cyber-Mint Scanner Code Eyes '< >' -->
+  <path
+    d="M 13 18.5 L 10.5 20.2 L 13 22"
+    stroke="url(#cbFavMint)"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+  <path
+    d="M 19 18.5 L 21.5 20.2 L 19 22"
+    stroke="url(#cbFavMint)"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+
+  <!-- Center Core / Nose Pip -->
+  <circle cx="16" cy="24.5" r="1.2" fill="#25E2A8" />
+</svg>

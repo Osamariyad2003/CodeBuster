@@ -1,14 +1,16 @@
-import React from 'react';
-import { FaBars, FaBell, FaSearch } from 'react-icons/fa';
-import { Link, useLocation, NavLink } from 'react-router-dom';
+import React, { useState, useRef, useEffect } from 'react';
+import { FaBars, FaBell, FaSearch, FaRobot, FaUser, FaCodeBranch, FaSignOutAlt, FaShieldAlt, FaSun, FaMoon } from 'react-icons/fa';
+import { Link, useLocation, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../AuthContext';
+import { useTheme } from '../../useTheme';
 import AiHealthBadge from './AiHealthBadge';
 
 const labelMap = {
     dashboard: 'Dashboard',
+    profile: 'Profile & Settings',
     repos: 'Repositories',
     search: 'Search',
-    reviews: 'Pull Requests',
+    reviews: 'Review History',
     events: 'Webhook Events',
     jobs: 'Jobs Queue',
     'system-status': 'System Status',
@@ -19,6 +21,10 @@ const labelMap = {
     'enriched-review': 'AI Reviews',
     'constellation': 'Constellation',
     'time-travel': 'Time Travel',
+    agents: 'AI Agents',
+    'feedback-insights': 'Finding Quality',
+    commits: 'Commits Inbox',
+    issues: 'Issues & Patches',
 };
 
 const aiReviewsTabs = [
@@ -28,8 +34,30 @@ const aiReviewsTabs = [
 
 const TopBar = ({ onToggleSidebar }) => {
     const location = useLocation();
-    const { user } = useAuth();
+    const navigate = useNavigate();
+    const { user, logout } = useAuth();
+    const [theme, toggleTheme] = useTheme();
     const isAiReviewsSection = location.pathname.includes('enriched-review');
+
+    const [showUserMenu, setShowUserMenu] = useState(false);
+    const dropdownRef = useRef(null);
+
+    // Close menu when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (e) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+                setShowUserMenu(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    const handleLogout = async () => {
+        setShowUserMenu(false);
+        await logout();
+        navigate('/', { replace: true });
+    };
 
     const getBreadcrumbs = () => {
         const segments = location.pathname.split('/').filter(Boolean);
@@ -44,32 +72,104 @@ const TopBar = ({ onToggleSidebar }) => {
     };
 
     const breadcrumbs = getBreadcrumbs();
-    const userName = user?.login || user?.name || user?.username || 'User';
+    const userName = user?.name || user?.login || 'User';
+
+    const renderUserMenu = () => (
+        <div className="cb-topbar-popover" style={{ zIndex: 1050 }}>
+            <div className="cb-popover-header">
+                {user?.avatar_url ? (
+                    <img
+                        src={user.avatar_url}
+                        alt={userName}
+                        className="cb-popover-avatar"
+                        style={{ objectFit: 'cover' }}
+                    />
+                ) : (
+                    <div className="cb-popover-avatar">
+                        {(userName || 'U').charAt(0).toUpperCase()}
+                    </div>
+                )}
+                <div style={{ minWidth: 0, flex: 1 }}>
+                    <div className="cb-popover-user-name text-truncate">{userName}</div>
+                    <div className="cb-popover-user-role">@{user?.login || userName}</div>
+                </div>
+            </div>
+
+            <Link
+                to="/profile"
+                className="cb-popover-item"
+                onClick={() => setShowUserMenu(false)}
+            >
+                <FaUser size={13} style={{ color: '#FF570A' }} />
+                <span>My Profile & AI Persona</span>
+            </Link>
+
+            <Link
+                to="/repos"
+                className="cb-popover-item"
+                onClick={() => setShowUserMenu(false)}
+            >
+                <FaCodeBranch size={13} style={{ color: '#25E2A8' }} />
+                <span>Connected Repositories</span>
+            </Link>
+
+            <Link
+                to="/agents"
+                className="cb-popover-item"
+                onClick={() => setShowUserMenu(false)}
+            >
+                <FaRobot size={13} style={{ color: '#687FF5' }} />
+                <span>AI Review Agents</span>
+            </Link>
+
+            <button
+                type="button"
+                className="cb-popover-item"
+                onClick={() => {
+                    toggleTheme();
+                    setShowUserMenu(false);
+                }}
+            >
+                {theme === 'dark' ? <FaSun size={13} style={{ color: '#F59E0B' }} /> : <FaMoon size={13} style={{ color: '#687FF5' }} />}
+                <span>Switch to {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}</span>
+            </button>
+
+            <div className="cb-popover-divider" />
+
+            <button
+                className="cb-popover-item cb-popover-item--danger"
+                onClick={handleLogout}
+            >
+                <FaSignOutAlt size={13} />
+                <span>Sign Out</span>
+            </button>
+        </div>
+    );
 
     if (isAiReviewsSection) {
         return (
-            <div className="qd-topbar qd-topbar--ai-reviews">
-                <div className="d-flex align-items-center gap-3">
+            <header className="qd-topbar qd-topbar--enriched position-relative">
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                     <button
                         className="qd-topbar__action d-md-none"
                         onClick={onToggleSidebar}
                         aria-label="Toggle sidebar"
                     >
-                        <FaBars size={16} />
+                        <FaBars size={15} />
                     </button>
-                    <div className="ai-reviews-header">
-                        <div className="ai-reviews-header__logo">A</div>
-                        <span className="ai-reviews-header__title">AI Reviews</span>
+                    <div className="ai-reviews-title-wrapper d-flex align-items-center gap-2">
+                        <span className="ai-reviews-title">AI Reviews</span>
+                        <span className="ai-badge">AST</span>
                     </div>
-                    <nav className="ai-reviews-tabs ai-reviews-tabs--topbar">
+                    <nav className="ai-reviews-tabs d-none d-md-flex">
                         {aiReviewsTabs.map((tab) => (
                             <NavLink
                                 key={tab.to}
                                 to={tab.to}
-                                className={({ isActive }) =>
-                                    `ai-reviews-tabs__item${isActive ? ' active' : ''}`
-                                }
                                 end={tab.to === '/enriched-review'}
+                                className={({ isActive }) =>
+                                    `ai-reviews-tab ${isActive ? 'ai-reviews-tab--active' : ''}`
+                                }
                             >
                                 {tab.label}
                             </NavLink>
@@ -78,27 +178,49 @@ const TopBar = ({ onToggleSidebar }) => {
                 </div>
                 <div className="qd-topbar__actions d-flex align-items-center gap-2">
                     <AiHealthBadge />
-                    <button className="qd-topbar__action" aria-label="Search">
+                    <button
+                        className="qd-topbar__action"
+                        aria-label="Search"
+                        onClick={() => navigate('/repos/search')}
+                        title="Search Repositories"
+                    >
                         <FaSearch size={14} />
                     </button>
                     <button className="qd-topbar__action qd-topbar__action--notification" aria-label="Notifications">
                         <FaBell size={14} />
                         <span className="qd-topbar__notification-dot" />
                     </button>
-                    <div className="qd-topbar__user-dropdown">
-                        <div className="qd-topbar__avatar qd-topbar__avatar--sm">
-                            {(userName || 'U').charAt(0).toUpperCase()}
-                        </div>
+                    <div
+                        ref={dropdownRef}
+                        className="qd-topbar__user-dropdown position-relative"
+                        onClick={() => setShowUserMenu(!showUserMenu)}
+                        style={{ cursor: 'pointer', zIndex: 1040 }}
+                        title="Click to view profile & options"
+                    >
+                        {user?.avatar_url ? (
+                            <img
+                                src={user.avatar_url}
+                                alt={userName}
+                                className="qd-topbar__avatar qd-topbar__avatar--sm"
+                                style={{ objectFit: 'cover' }}
+                            />
+                        ) : (
+                            <div className="qd-topbar__avatar qd-topbar__avatar--sm">
+                                {(userName || 'U').charAt(0).toUpperCase()}
+                            </div>
+                        )}
                         <span className="qd-topbar__user-name d-none d-sm-inline">{userName}</span>
                         <span className="qd-topbar__chevron">▼</span>
+
+                        {showUserMenu && renderUserMenu()}
                     </div>
                 </div>
-            </div>
+            </header>
         );
     }
 
     return (
-        <div className="qd-topbar">
+        <header className="qd-topbar position-relative" style={{ zIndex: 1030 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <button
                     className="qd-topbar__action d-md-none"
@@ -124,7 +246,12 @@ const TopBar = ({ onToggleSidebar }) => {
             </div>
             <div className="qd-topbar__actions">
                 <AiHealthBadge />
-                <button className="qd-topbar__action" aria-label="Search">
+                <button
+                    className="qd-topbar__action"
+                    aria-label="Search"
+                    onClick={() => navigate('/repos/search')}
+                    title="Search Repositories"
+                >
                     <FaSearch size={13} />
                 </button>
                 <button className="qd-topbar__action qd-topbar__action--notification" aria-label="Notifications">
@@ -132,15 +259,33 @@ const TopBar = ({ onToggleSidebar }) => {
                     <span className="qd-topbar__notification-dot" />
                 </button>
                 {userName && (
-                    <div className="qd-topbar__user-dropdown" style={{ marginLeft: 4 }}>
-                        <div className="qd-topbar__avatar qd-topbar__avatar--sm">
-                            {userName.charAt(0).toUpperCase()}
-                        </div>
+                    <div
+                        ref={dropdownRef}
+                        className="qd-topbar__user-dropdown position-relative"
+                        style={{ marginLeft: 4, cursor: 'pointer', zIndex: 1040 }}
+                        onClick={() => setShowUserMenu(!showUserMenu)}
+                        title="Click to view profile & options"
+                    >
+                        {user?.avatar_url ? (
+                            <img
+                                src={user.avatar_url}
+                                alt={userName}
+                                className="qd-topbar__avatar qd-topbar__avatar--sm"
+                                style={{ objectFit: 'cover' }}
+                            />
+                        ) : (
+                            <div className="qd-topbar__avatar qd-topbar__avatar--sm">
+                                {userName.charAt(0).toUpperCase()}
+                            </div>
+                        )}
                         <span className="qd-topbar__user-name d-none d-lg-inline">{userName}</span>
+                        <span className="qd-topbar__chevron" style={{ fontSize: '9px', marginLeft: 4 }}>▼</span>
+
+                        {showUserMenu && renderUserMenu()}
                     </div>
                 )}
             </div>
-        </div>
+        </header>
     );
 };
 

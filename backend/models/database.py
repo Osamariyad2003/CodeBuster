@@ -1,6 +1,7 @@
 """Database initialization and configuration."""
 from flask_sqlalchemy import SQLAlchemy
 from pathlib import Path
+from sqlalchemy import text
 import os
 
 db = SQLAlchemy()
@@ -24,5 +25,16 @@ def init_db(app):
     
     with app.app_context():
         db.create_all()
+        # Ensure new user profile columns exist in existing SQLite databases
+        for col_name, col_type in [
+            ('bio', 'TEXT'),
+            ('role', 'VARCHAR(100)'),
+            ('company', 'VARCHAR(255)'),
+            ('preferences', 'TEXT')
+        ]:
+            try:
+                db.session.execute(text(f"ALTER TABLE users ADD COLUMN {col_name} {col_type}"))
+                db.session.commit()
+            except Exception:
+                db.session.rollback()
         print(f"[OK] Database initialized: {db_url}")
-

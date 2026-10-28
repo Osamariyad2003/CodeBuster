@@ -1,17 +1,28 @@
+import os
+os.environ["TESTING"] = "true"
+
 import hmac
 import hashlib
+import json
+import sys
+from pathlib import Path
 import pytest
 from fastapi.testclient import TestClient
-from main import app, GITHUB_WEBHOOK_SECRET
+
+ROOT_DIR = Path(__file__).resolve().parent.parent.parent
+if str(ROOT_DIR) not in sys.path:
+    sys.path.insert(0, str(ROOT_DIR))
+
+from webhook_ingestor import main as ingestor_main
+from webhook_ingestor.main import app
 
 client = TestClient(app)
 
-@pytest.fixture
+@pytest.fixture(autouse=True)
 def mock_secret(monkeypatch):
     secret = "test_secret"
     monkeypatch.setenv("GITHUB_WEBHOOK_SECRET", secret)
-    import main
-    monkeypatch.setattr(main, "GITHUB_WEBHOOK_SECRET", secret)
+    monkeypatch.setattr(ingestor_main, "GITHUB_WEBHOOK_SECRET", secret)
     return secret
 
 def test_signature_verification_success(mock_secret):
@@ -53,10 +64,3 @@ def test_missing_signature():
     response = client.post("/webhooks/github", json={"test": "data"}, headers=headers)
     assert response.status_code == 401
     assert response.json()["detail"] == "Signature missing"
-
-def test_unsupported_event():
-    # Assume signature is valid (we'll bypass or use a mock secret)
-    # For simplicity in this test, we use the fact that if secret is missing it returns 401 or 500
-    pass
-
-import json

@@ -172,7 +172,7 @@ const EventsPage = () => {
                 </div>
 
                 {/* Filters */}
-                <Card className="mb-4" style={{ border: '1px solid var(--border-subtle)', borderRadius: 12 }}>
+                <Card className="mb-4" style={{ background: 'var(--surface-card)', border: '1px solid var(--border-default)', borderRadius: 12 }}>
                     <Card.Body className="py-3">
                         <Row className="g-3 align-items-end">
                             <Col md={3}>
@@ -250,7 +250,7 @@ const EventsPage = () => {
                 </Card>
 
                 {/* Events Table */}
-                <Card style={{ border: '1px solid var(--border-subtle)', borderRadius: 12 }}>
+                <Card style={{ background: 'var(--surface-card)', border: '1px solid var(--border-default)', borderRadius: 12 }}>
                     <Card.Body className="p-0">
                         {loading && events.length === 0 ? (
                             <div className="p-4">

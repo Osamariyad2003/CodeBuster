@@ -37,8 +37,21 @@ class TruffleHogScanner:
                 file_path = file_info.get('path', 'unknown')
                 content = file_info.get('content', '')
                 
+                # Sanitize file_path against path traversal
+                clean_path = os.path.normpath(file_path).lstrip('/\\')
+                if len(clean_path) > 1 and clean_path[1] == ':':
+                    clean_path = clean_path[2:].lstrip('/\\')
+                full_path = os.path.abspath(os.path.join(temp_dir, clean_path))
+                temp_dir_abs = os.path.abspath(temp_dir)
+                try:
+                    common = os.path.commonpath([temp_dir_abs, full_path])
+                except ValueError:
+                    common = None
+                if common != temp_dir_abs:
+                    logger.warning("path_traversal_attempt_blocked", file_path=file_path)
+                    continue
+
                 # Create subdirectories if needed
-                full_path = os.path.join(temp_dir, file_path)
                 os.makedirs(os.path.dirname(full_path), exist_ok=True)
                 
                 with open(full_path, "w", encoding="utf-8") as f:

@@ -4,7 +4,7 @@ Your GitHub App private key fingerprint: `SHA256:ZZTlCLrOKVL5JrravL7UKRlffbCipz/
 
 ## What You Need to Do
 
-### 1️⃣ Create Your `.env` File
+### 1⃣ Create Your `.env` File
 
 In the `backend` folder, create a file named `.env` (note: starts with a dot):
 
@@ -13,7 +13,7 @@ cd backend
 cp config_template.env .env
 ```
 
-### 2️⃣ Add Your Private Key
+### 2⃣ Add Your Private Key
 
 Open the `.env` file and paste your GitHub App private key. It should look like this:
 
@@ -36,7 +36,7 @@ FRONTEND_URL=http://localhost:5174
 - Include the `-----BEGIN RSA PRIVATE KEY-----` and `-----END RSA PRIVATE KEY-----` lines
 - Don't add extra spaces or newlines
 
-### 3️⃣ Where to Get These Values
+### 3⃣ Where to Get These Values
 
 | Variable | Where to Find It |
 |----------|------------------|
@@ -45,7 +45,7 @@ FRONTEND_URL=http://localhost:5174
 | `GITHUB_WEBHOOK_SECRET` | You create this yourself (any random string) when setting up the GitHub App |
 | `FLASK_SECRET_KEY` | Any random string (for session security) |
 
-### 4️⃣ Verify Your Setup
+### 4⃣ Verify Your Setup
 
 Run the verification script to check everything is configured correctly:
 
@@ -56,7 +56,7 @@ python verify_setup.py
 
 You should see all green checkmarks ✅
 
-### 5️⃣ Start the Application
+### 5⃣ Start the Application
 
 **Terminal 1 - Backend:**
 ```bash
@@ -70,7 +70,7 @@ cd frontend
 npm run dev
 ```
 
-### 6️⃣ Test It Out
+### 6⃣ Test It Out
 
 **Option A: Manual Upload**
 1. Open http://localhost:5174 in your browser

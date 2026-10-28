@@ -382,8 +382,8 @@ export default function SearchRepositoriesPage() {
         className="p-3 mb-3 d-flex align-items-start gap-3"
         onClick={handleCardClick}
         style={{
-          background: "white",
-          border: "1px solid #E5E7EB",
+          background: "var(--surface-card)",
+          border: "1px solid var(--border-default)",
           borderRadius: 12,
           boxShadow: "0 1px 2px rgba(0, 0, 0, 0.02)",
           cursor: tab === "installed" ? "pointer" : "default",
@@ -392,12 +392,12 @@ export default function SearchRepositoriesPage() {
         onMouseEnter={(e) => {
           if (tab !== "installed") return;
           e.currentTarget.style.transform = "translateY(-1px)";
-          e.currentTarget.style.boxShadow = "0 4px 12px rgba(0, 0, 0, 0.06)";
+          e.currentTarget.style.boxShadow = "var(--shadow-md)";
         }}
         onMouseLeave={(e) => {
           if (tab !== "installed") return;
           e.currentTarget.style.transform = "none";
-          e.currentTarget.style.boxShadow = "0 1px 2px rgba(0, 0, 0, 0.02)";
+          e.currentTarget.style.boxShadow = "var(--shadow-sm)";
         }}
       >
         {/* GitHub icon chip */}
@@ -406,8 +406,8 @@ export default function SearchRepositoriesPage() {
             width: 36,
             height: 36,
             borderRadius: 8,
-            background: connected ? "rgba(5, 150, 105, 0.1)" : "#F3F4F6",
-            color: connected ? "#059669" : "#374151",
+            background: connected ? "rgba(37, 226, 168, 0.15)" : "var(--surface-card-elevated)",
+            color: connected ? "#25E2A8" : "var(--text-secondary)",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
@@ -422,7 +422,7 @@ export default function SearchRepositoriesPage() {
           <div className="d-flex align-items-center gap-2 flex-wrap mb-1">
             <span
               className="fw-semibold text-truncate"
-              style={{ color: "#111827", fontSize: "0.95rem" }}
+              style={{ color: "var(--text-primary)", fontSize: "0.95rem" }}
               title={item.full_name}
             >
               {item.full_name}
@@ -433,7 +433,7 @@ export default function SearchRepositoriesPage() {
               </Badge>
             )}
             {item.language && (
-              <Badge bg="light" text="dark" pill style={{ fontSize: "0.7rem" }}>
+              <Badge bg="secondary" pill style={{ fontSize: "0.7rem", border: "1px solid var(--border-default)" }}>
                 {item.language}
               </Badge>
             )}
@@ -578,7 +578,7 @@ export default function SearchRepositoriesPage() {
     return (
       <>
         {[0, 1, 2].map((i) => (
-          <Card key={i} className="mb-3">
+          <Card key={i} className="mb-3" style={{ background: "var(--surface-card)", border: "1px solid var(--border-default)", borderRadius: 12 }}>
             <Card.Body>
               <div className="placeholder-glow">
                 <span className="placeholder col-6 mb-2" />
@@ -606,7 +606,7 @@ export default function SearchRepositoriesPage() {
       {/* Header */}
       <div className="d-flex justify-content-between align-items-start mb-4 flex-wrap gap-3">
         <div>
-          <h4 className="mb-1 fw-bold" style={{ color: "#111827" }}>
+          <h4 className="mb-1 fw-bold" style={{ color: "var(--text-primary)" }}>
             Connect a repository
           </h4>
           <div className="text-muted small" style={{ maxWidth: 600 }}>
@@ -639,8 +639,8 @@ export default function SearchRepositoriesPage() {
         <div
           className="d-flex align-items-center px-3"
           style={{
-            background: "white",
-            border: "1px solid #E5E7EB",
+            background: "var(--surface-card)",
+            border: "1px solid var(--border-default)",
             borderRadius: 10,
             boxShadow: "0 1px 2px rgba(0, 0, 0, 0.02)",
           }}
@@ -683,8 +683,8 @@ export default function SearchRepositoriesPage() {
             borderRadius: 10,
           }}
         >
-          <Spinner size="sm" animation="border" style={{ color: "#4F46E5" }} />
-          <div className="flex-grow-1 small" style={{ color: "#374151" }}>
+          <Spinner size="sm" animation="border" style={{ color: "#FF570A" }} />
+          <div className="flex-grow-1 small" style={{ color: "var(--text-primary)" }}>
             Locating your fork <strong>{pendingFork}</strong>… this usually
             takes a few seconds.
           </div>
@@ -705,8 +705,8 @@ export default function SearchRepositoriesPage() {
         <div
           className="text-center py-5 px-4"
           style={{
-            background: "white",
-            border: "2px dashed #E5E7EB",
+            background: "var(--surface-card)",
+            border: "2px dashed var(--border-default)",
             borderRadius: 12,
           }}
         >
@@ -715,7 +715,7 @@ export default function SearchRepositoriesPage() {
               width: 56,
               height: 56,
               borderRadius: 14,
-              background: "#F3F4F6",
+              background: "var(--surface-card-elevated)",
               display: "inline-flex",
               alignItems: "center",
               justifyContent: "center",

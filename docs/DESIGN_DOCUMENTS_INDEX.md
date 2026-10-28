@@ -126,7 +126,7 @@ For each module:
 
 ---
 
-## 🗺️ Reading Guide
+## 🗺 Reading Guide
 
 ### For Architects / Tech Leads
 1. Start with `SYSTEM_DESIGN_SUMMARY.md`

@@ -15,7 +15,7 @@ const SEV_ORDER = { critical: 0, major: 1, minor: 2, info: 3 };
 const SEV = {
   critical: { color: '#EF4444', bg: 'rgba(239,68,68,0.12)', border: 'rgba(239,68,68,0.3)', label: 'Critical' },
   major:    { color: '#F59E0B', bg: 'rgba(245,158,11,0.12)', border: 'rgba(245,158,11,0.3)', label: 'Major'    },
-  minor:    { color: '#818CF8', bg: 'rgba(129,140,248,0.10)', border: 'rgba(129,140,248,0.25)', label: 'Minor' },
+  minor:    { color: '#687FF5', bg: 'rgba(129,140,248,0.10)', border: 'rgba(129,140,248,0.25)', label: 'Minor' },
   info:     { color: '#94A3B8', bg: 'rgba(148,163,184,0.08)', border: 'rgba(148,163,184,0.2)', label: 'Info'   },
 };
 
@@ -410,7 +410,7 @@ export default function TimeTravelPage() {
                 className={`tt-file-item${selectedFile === null ? ' active' : ''}`}
                 onClick={() => setSelectedFile(null)}
               >
-                <span className="tt-file-item__name" style={{ color: '#818CF8' }}>All files</span>
+                <span className="tt-file-item__name" style={{ color: '#FF570A' }}>All files</span>
                 <span className="tt-file-item__count">{currentIssues.length}</span>
               </button>
               {filteredFiles.map(f => {
@@ -562,7 +562,7 @@ const CSS = `
 .tt-header {
   display: flex; align-items: center; justify-content: space-between;
   padding: 0 20px; height: 52px; flex-shrink: 0;
-  background: rgba(12,12,16,0.95); border-bottom: 1px solid rgba(129,140,248,0.12);
+  background: rgba(12,12,16,0.95); border-bottom: 1px solid rgba(255,87,10,0.15);
   backdrop-filter: blur(12px); gap: 16px;
 }
 .tt-header__left { display: flex; align-items: center; gap: 12px; min-width: 0; }
@@ -570,16 +570,16 @@ const CSS = `
 
 .tt-logo {
   width: 28px; height: 28px; border-radius: 7px; flex-shrink: 0;
-  background: linear-gradient(135deg, #6366F1, #818CF8);
+  background: linear-gradient(135deg, #FF570A, #FF7A30);
   display: flex; align-items: center; justify-content: center;
-  color: #fff; box-shadow: 0 0 14px rgba(99,102,241,0.5);
+  color: #fff; box-shadow: 0 0 14px rgba(255,87,10,0.4);
 }
 .tt-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 15px; color: #E2E8F0; flex-shrink: 0; }
 
 .tt-header__review-pill {
   display: flex; align-items: center; gap: 6px;
   padding: 3px 10px; border-radius: 20px;
-  background: rgba(99,102,241,0.1); border: 1px solid rgba(99,102,241,0.2);
+  background: rgba(255,87,10,0.12); border: 1px solid rgba(255,87,10,0.22);
   font-size: 11px; color: #94A3B8; overflow: hidden;
 }
 
@@ -587,13 +587,13 @@ const CSS = `
 .tt-repo-toggle {
   display: flex; align-items: center; gap: 8px; padding: 6px 12px;
   border-radius: 8px; cursor: pointer;
-  background: rgba(99,102,241,0.1); border: 1px solid rgba(99,102,241,0.25);
+  background: rgba(255,87,10,0.12); border: 1px solid rgba(99,102,241,0.25);
   color: #CBD5E1; font-size: 13px; transition: all 0.15s;
 }
 .tt-repo-toggle:hover { background: rgba(99,102,241,0.18); border-color: rgba(99,102,241,0.4); }
 .tt-chevron { font-size: 10px; color: #64748B; }
 .tt-repo-menu {
-  background: #141419 !important; border: 1px solid rgba(99,102,241,0.2) !important;
+  background: #141419 !important; border: 1px solid rgba(255,87,10,0.22) !important;
   border-radius: 10px !important; padding: 6px !important;
   box-shadow: 0 16px 48px rgba(0,0,0,0.6) !important; min-width: 240px !important;
 }
@@ -630,7 +630,7 @@ const CSS = `
 
 .tt-file-list { flex: 1; overflow-y: auto; padding: 0 6px 8px; }
 .tt-file-list::-webkit-scrollbar { width: 3px; }
-.tt-file-list::-webkit-scrollbar-thumb { background: rgba(99,102,241,0.2); border-radius: 99px; }
+.tt-file-list::-webkit-scrollbar-thumb { background: rgba(255,87,10,0.22); border-radius: 99px; }
 
 .tt-file-item {
   width: 100%; display: flex; align-items: center; justify-content: space-between;
@@ -647,7 +647,7 @@ const CSS = `
 .tt-file-item.active .tt-file-item__name { color: #C7D2FE; }
 .tt-file-item__count {
   font-size: 10px; padding: 1px 5px; border-radius: 99px;
-  background: rgba(99,102,241,0.15); color: #818CF8; flex-shrink: 0;
+  background: rgba(255,87,10,0.15); color: #FF7A30; flex-shrink: 0;
 }
 
 /* Editor */
@@ -657,15 +657,15 @@ const CSS = `
   padding: 7px 16px; border-bottom: 1px solid rgba(129,140,248,0.1);
   background: rgba(12,12,16,0.8); flex-shrink: 0;
 }
-.tt-editor__file { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #818CF8; }
+.tt-editor__file { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #FF7A30; }
 .tt-editor__meta { display: flex; align-items: center; gap: 10px; }
 .tt-count-pill {
   padding: 2px 8px; border-radius: 99px; font-size: 11px;
-  background: rgba(99,102,241,0.15); color: #818CF8;
+  background: rgba(255,87,10,0.15); color: #FF7A30;
 }
 .tt-code-wrap { flex: 1; overflow-y: auto; padding: 12px; background: #09090E; position: relative; }
 .tt-code-wrap::-webkit-scrollbar { width: 4px; }
-.tt-code-wrap::-webkit-scrollbar-thumb { background: rgba(99,102,241,0.2); border-radius: 99px; }
+.tt-code-wrap::-webkit-scrollbar-thumb { background: rgba(255,87,10,0.22); border-radius: 99px; }
 .tt-issues-list { display: flex; flex-direction: column; gap: 10px; }
 
 /* Issue cards */
@@ -711,27 +711,27 @@ const CSS = `
   padding: 4px 12px 8px; font-size: 11px; color: #64748B;
   border-top: 1px solid rgba(255,255,255,0.04);
 }
-.tt-issue__fix-label { color: #818CF8; font-weight: 600; }
+.tt-issue__fix-label { color: #FF7A30; font-weight: 600; }
 
 /* Timeline */
 .tt-timeline {
   flex-shrink: 0; height: 80px; display: flex; align-items: center; gap: 16px;
   padding: 0 20px; background: rgba(8,8,12,0.97);
-  border-top: 1px solid rgba(129,140,248,0.12);
+  border-top: 1px solid rgba(255,87,10,0.15);
 }
 .tt-timeline__controls { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
 .tt-ctrl-btn {
   width: 26px; height: 26px; display: flex; align-items: center; justify-content: center;
-  border-radius: 6px; border: none; background: rgba(99,102,241,0.1);
+  border-radius: 6px; border: none; background: rgba(255,87,10,0.12);
   color: #64748B; cursor: pointer; transition: all 0.15s; font-size: 14px;
 }
-.tt-ctrl-btn:hover { background: rgba(99,102,241,0.2); color: #818CF8; }
+.tt-ctrl-btn:hover { background: rgba(255,87,10,0.22); color: #FF7A30; }
 .tt-ctrl-btn--play {
   width: 32px; height: 32px; border-radius: 50%;
-  background: linear-gradient(135deg, #6366F1, #818CF8);
-  color: #fff; box-shadow: 0 0 12px rgba(99,102,241,0.5);
+  background: linear-gradient(135deg, #FF570A, #FF7A30);
+  color: #fff; box-shadow: 0 0 12px rgba(255,87,10,0.4);
 }
-.tt-ctrl-btn--play:hover { box-shadow: 0 0 20px rgba(99,102,241,0.7); transform: scale(1.08); }
+.tt-ctrl-btn--play:hover { box-shadow: 0 0 20px rgba(255,87,10,0.6); transform: scale(1.08); }
 
 .tt-timeline__track-wrap { flex: 1; display: flex; flex-direction: column; gap: 4px; }
 .tt-track {
@@ -741,21 +741,21 @@ const CSS = `
 .tt-track:hover { background: rgba(255,255,255,0.09); }
 .tt-track__fill {
   position: absolute; left: 0; top: 0; height: 100%; border-radius: 99px;
-  background: linear-gradient(90deg, #6366F1, #818CF8);
+  background: linear-gradient(90deg, #FF570A, #FF7A30);
   transition: width 0.35s cubic-bezier(0.34, 1.56, 0.64, 1); pointer-events: none;
 }
 .tt-dot {
   position: absolute; top: 50%; transform: translate(-50%, -50%);
   width: 10px; height: 10px; border-radius: 50%;
-  background: var(--sev-color, #818CF8);
+  background: var(--sev-color, #FF570A);
   border: 2px solid rgba(9,9,14,0.9);
   cursor: pointer; transition: all 0.15s; z-index: 2;
-  box-shadow: 0 0 5px var(--sev-color, #818CF8);
+  box-shadow: 0 0 5px var(--sev-color, #FF570A);
 }
 .tt-dot:hover { transform: translate(-50%, -50%) scale(1.5); }
 .tt-dot--active {
   width: 14px; height: 14px; z-index: 3;
-  box-shadow: 0 0 12px var(--sev-color, #818CF8), 0 0 24px rgba(99,102,241,0.35);
+  box-shadow: 0 0 12px var(--sev-color, #FF570A), 0 0 24px rgba(99,102,241,0.35);
 }
 .tt-playhead {
   position: absolute; top: 50%; transform: translate(-50%, -50%);
@@ -771,7 +771,7 @@ const CSS = `
   font-size: 9px; color: #2D3748; transition: color 0.15s; white-space: nowrap;
   font-family: 'JetBrains Mono', monospace;
 }
-.tt-date-label.active { color: #818CF8; }
+.tt-date-label.active { color: #FF570A; }
 
 .tt-timeline__info {
   display: flex; flex-direction: column; gap: 1px;

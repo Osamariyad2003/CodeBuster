@@ -27,7 +27,7 @@ html.dark .parallax-orb {
 .orb-1 {
   width: 50vw;
   height: 50vw;
-  background: radial-gradient(circle, var(--jb-purple, #6c5ce7) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(255, 87, 10, 0.18) 0%, transparent 70%);
   top: -10vw;
   left: -10vw;
 }
@@ -35,7 +35,7 @@ html.dark .parallax-orb {
 .orb-2 {
   width: 40vw;
   height: 40vw;
-  background: radial-gradient(circle, var(--color-info, #00cec9) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(37, 226, 168, 0.12) 0%, transparent 70%);
   bottom: -5vw;
   right: -5vw;
 }
@@ -43,10 +43,10 @@ html.dark .parallax-orb {
 .orb-3 {
   width: 60vw;
   height: 60vw;
-  background: radial-gradient(circle, var(--primary-brand, #4F46E5) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(104, 127, 245, 0.12) 0%, transparent 70%);
   top: 40%;
   left: 20%;
-  opacity: 0.15;
+  opacity: 0.2;
 }
 
 /* Optional dust overlay for texture */

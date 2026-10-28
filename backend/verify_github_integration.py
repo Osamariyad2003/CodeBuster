@@ -53,7 +53,7 @@ def verify():
             if count > 0:
                 inst_id = installations[0]['id']
                 account = installations[0]['account']['login']
-                print(f"   [INFO]️  Testing with installation ID: {inst_id} (Account: {account})")
+                print(f"   [INFO]  Testing with installation ID: {inst_id} (Account: {account})")
 
                 # 4. Test Token Retrieval & Caching
                 print(f"\n4. Fetching Access Token for Installation {inst_id}...")

@@ -192,7 +192,7 @@ const GitHubConnect = ({ isModal = false, onHide = null }) => {
         </div>
       </div>
 
-      <Nav variant="pills" className="bg-light p-1 mb-4" style={{ borderRadius: 12 }}>
+      <Nav variant="pills" className="p-1 mb-4" style={{ borderRadius: 12, background: 'var(--surface-card-elevated)', border: '1px solid var(--border-default)' }}>
         <Nav.Item className="flex-grow-1 text-center">
           <Nav.Link
             active={activeTab === 'connected'}
@@ -231,7 +231,7 @@ const GitHubConnect = ({ isModal = false, onHide = null }) => {
 
       <div style={{ maxHeight: 500, overflowY: 'auto' }}>
         {activeTab === 'connected' && connectedRepos.length === 0 ? (
-          <div className="text-center py-5 border rounded-3 bg-light-subtle">
+          <div className="text-center py-5 border rounded-3" style={{ background: 'var(--surface-card-elevated)', borderColor: 'var(--border-default)' }}>
             <p className="text-muted mb-0">No repositories connected yet.</p>
             <Button variant="link" onClick={() => setActiveTab('available')}>Browse available repos</Button>
           </div>
@@ -250,7 +250,7 @@ const GitHubConnect = ({ isModal = false, onHide = null }) => {
                   <div className="flex-grow-1">
                     <div className="d-flex align-items-center gap-2 mb-1">
                       <strong style={{ fontSize: '0.95rem' }}>{repo.name}</strong>
-                      {repo.private && <Badge bg="light" text="dark" className="border small">Private</Badge>}
+                      {repo.private && <Badge bg="secondary" className="border border-secondary-subtle small">Private</Badge>}
                       {isConnected && activeTab === 'available' && <Badge bg="success-subtle" className="text-success border border-success-subtle small">Connected</Badge>}
                     </div>
                     <small className="text-muted d-block">{repo.full_name}</small>

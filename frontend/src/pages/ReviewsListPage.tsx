@@ -22,8 +22,8 @@ const PAGE_SIZE = 20;
 
 const gradeColor = (grade?: string | null): string => {
   switch (grade) {
-    case "A": return "#059669";
-    case "B": return "#4F46E5";
+    case "A": return "#25E2A8";
+    case "B": return "#687FF5";
     case "C": return "#F59E0B";
     case "D": return "#EF4444";
     case "F": return "#991B1B";
@@ -33,8 +33,8 @@ const gradeColor = (grade?: string | null): string => {
 
 const scoreColor = (score?: number | null): string => {
   if (score == null) return "#9CA3AF";
-  if (score >= 85) return "#059669";
-  if (score >= 70) return "#4F46E5";
+  if (score >= 85) return "#25E2A8";
+  if (score >= 70) return "#687FF5";
   if (score >= 50) return "#F59E0B";
   return "#EF4444";
 };
@@ -126,7 +126,7 @@ export default function ReviewsListPage() {
       {/* Page header */}
       <div className="d-flex justify-content-between align-items-start mb-4 flex-wrap gap-3">
         <div>
-          <h4 className="mb-1 fw-bold" style={{ color: "#111827" }}>
+          <h4 className="mb-1 fw-bold" style={{ color: "var(--text-primary)" }}>
             Reviews
           </h4>
           <div className="text-muted small">
@@ -145,7 +145,7 @@ export default function ReviewsListPage() {
       {/* Search */}
       {reviews.length > 5 && (
         <InputGroup className="mb-3" style={{ maxWidth: 420 }}>
-          <InputGroup.Text style={{ background: "white", borderRight: 0 }}>
+          <InputGroup.Text style={{ background: "var(--surface-card)", borderColor: "var(--border-default)", borderRight: 0, color: "var(--text-muted)" }}>
             <FaSearch size={12} className="text-muted" />
           </InputGroup.Text>
           <Form.Control
@@ -171,8 +171,8 @@ export default function ReviewsListPage() {
         <div
           className="text-center py-5 px-4"
           style={{
-            background: "white",
-            border: "2px dashed #E5E7EB",
+            background: "var(--surface-card)",
+            border: "2px dashed var(--border-default)",
             borderRadius: 12,
           }}
         >
@@ -181,7 +181,7 @@ export default function ReviewsListPage() {
               width: 56,
               height: 56,
               borderRadius: 14,
-              background: "#F3F4F6",
+              background: "var(--surface-card-elevated)",
               display: "inline-flex",
               alignItems: "center",
               justifyContent: "center",
@@ -193,15 +193,15 @@ export default function ReviewsListPage() {
           </div>
           <h6 className="fw-semibold mb-2">No reviews yet</h6>
           <p className="text-muted small mb-3">
-            Run a scan from the Commits inbox or push a commit to a connected
+            Run a scan from the dashboard or push a commit to a connected
             repo to create your first review.
           </p>
-          <Button as={Link as any} to="/commits" variant="primary" size="sm">
-            Open Commits
+          <Button as={Link as any} to="/repos" variant="primary" size="sm">
+            View Repositories
           </Button>
         </div>
       ) : filteredReviews.length === 0 ? (
-        <Alert variant="light" className="border text-center py-3">
+        <Alert variant="secondary" className="text-center py-3" style={{ background: "var(--surface-card-elevated)", borderColor: "var(--border-default)", color: "var(--text-primary)" }}>
           No reviews on this page match <strong>"{query}"</strong>.{" "}
           <Button
             variant="link"
@@ -214,8 +214,8 @@ export default function ReviewsListPage() {
       ) : (
         <div
           style={{
-            background: "white",
-            border: "1px solid #E5E7EB",
+            background: "var(--surface-card)",
+            border: "1px solid var(--border-default)",
             borderRadius: 12,
             overflow: "hidden",
           }}
@@ -231,12 +231,12 @@ export default function ReviewsListPage() {
                 to={`/reviews/${r.id}`}
                 className="d-flex align-items-center px-3 py-3 text-decoration-none"
                 style={{
-                  borderBottom: isLast ? "none" : "1px solid #F3F4F6",
+                  borderBottom: isLast ? "none" : "1px solid var(--border-subtle)",
                   color: "inherit",
                   transition: "background 0.1s ease",
                 }}
-                onMouseEnter={(e) => (e.currentTarget.style.background = "#F9FAFB")}
-                onMouseLeave={(e) => (e.currentTarget.style.background = "white")}
+                onMouseEnter={(e) => (e.currentTarget.style.background = "var(--surface-card-elevated)")}
+                onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
               >
                 {/* Grade badge */}
                 <div
@@ -244,33 +244,39 @@ export default function ReviewsListPage() {
                     width: 40,
                     height: 40,
                     borderRadius: 10,
-                    background: gradeColor(grade),
-                    color: "white",
+                    background: r.status === "failed" ? "rgba(239, 68, 68, 0.15)" : gradeColor(grade),
+                    color: r.status === "failed" ? "#EF4444" : "white",
+                    border: r.status === "failed" ? "1px solid rgba(239, 68, 68, 0.3)" : "none",
                     fontWeight: 700,
-                    fontSize: 16,
+                    fontSize: r.status === "failed" ? 11 : 16,
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
                     flexShrink: 0,
                   }}
-                  title={grade ? `Grade ${grade}` : "No grade"}
+                  title={r.status === "failed" ? "Review Failed" : grade ? `Grade ${grade}` : "No grade"}
                 >
-                  {grade || "—"}
+                  {r.status === "failed" ? "FAIL" : (grade || "—")}
                 </div>
 
                 {/* Repo + relative date */}
                 <div className="ms-3" style={{ minWidth: 0, flex: 1 }}>
                   <div
                     className="fw-semibold text-truncate"
-                    style={{ fontSize: "0.95rem", color: "#111827" }}
+                    style={{ fontSize: "0.95rem", color: "var(--text-primary)" }}
                     title={repoName}
                   >
                     {repoName}
                   </div>
-                  <div className="text-muted small">
-                    {formatDate(r.created_at)}
+                  <div className="text-muted small d-flex align-items-center gap-2 flex-wrap">
+                    <span>{formatDate(r.created_at)}</span>
+                    {r.status === "failed" && (
+                      <span className="badge bg-danger-subtle text-danger border border-danger-subtle" style={{ fontSize: "0.65rem" }}>
+                        FAILED
+                      </span>
+                    )}
                     {r.completed_at && r.completed_at !== r.created_at && (
-                      <> · completed {formatDate(r.completed_at)}</>
+                      <span>· completed {formatDate(r.completed_at)}</span>
                     )}
                   </div>
                 </div>
@@ -288,7 +294,7 @@ export default function ReviewsListPage() {
                       fontSize: "0.7rem",
                       fontWeight: 600,
                       color: "#6B7280",
-                      background: "#F3F4F6",
+                      background: "var(--surface-card-elevated)",
                       borderRadius: 6,
                       padding: "2px 7px",
                     }}
@@ -302,7 +308,7 @@ export default function ReviewsListPage() {
                       style={{
                         flex: 1,
                         height: 4,
-                        background: "#F3F4F6",
+                        background: "var(--surface-card-elevated)",
                         borderRadius: 2,
                         overflow: "hidden",
                       }}

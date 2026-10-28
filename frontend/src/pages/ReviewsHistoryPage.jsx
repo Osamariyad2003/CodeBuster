@@ -69,7 +69,7 @@ export default function ReviewsHistoryPage() {
                 </div>
             ) : (
                 <Table hover responsive>
-                    <thead className="table-light">
+                    <thead style={{ background: 'var(--surface-card-elevated)' }}>
                         <tr>
                             <th>Date</th>
                             <th>Score</th>

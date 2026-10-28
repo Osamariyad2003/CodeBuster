@@ -24,7 +24,7 @@ CodeBuster is an **AI-powered engineering health analysis platform** that provid
 - **Review history**: Historical view of all code reviews and their outcomes
 - **Event tracking**: Monitor webhook events and analysis job queues
 
-### 🛡️ Security & Production-Ready
+### 🛡 Security & Production-Ready
 - **Encrypted token storage**: Fernet encryption for GitHub access tokens
 - **Debug mode disabled**: Production-safe Flask configuration
 - **Rate limiting**: Protection against webhook spam
@@ -97,7 +97,7 @@ CodeBuster is an **AI-powered engineering health analysis platform** that provid
 3. **Session Security**: Minimal user data stored in sessions
 4. **HTTPS-Ready**: Production configuration for secure deployments
 
-### 🏗️ Architecture Improvements
+### 🏗 Architecture Improvements
 1. **PostgreSQL Migration**: Default database changed from SQLite to PostgreSQL
 2. **Docker Support**: Multi-stage Dockerfile with production optimizations
 3. **Modular Routes**: Separated concerns (auth, repos, metrics, github)

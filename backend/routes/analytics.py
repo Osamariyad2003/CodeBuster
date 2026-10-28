@@ -4,7 +4,7 @@ from flask import Blueprint, jsonify, request, session
 from functools import wraps
 from sqlalchemy import func
 
-from models import db, Review, Issue
+from models import db, Review, Issue, Repository, User
 
 analytics_bp = Blueprint('analytics', __name__, url_prefix='/api/repos')
 
@@ -16,6 +16,18 @@ def login_required(f):
             return jsonify({"error": "Unauthorized"}), 401
         return f(*args, **kwargs)
     return decorated
+
+
+def _get_current_user_db():
+    user_session = session.get('user') or {}
+    user_id = user_session.get('id')
+    login = user_session.get('login') or user_session.get('username')
+    user_db = None
+    if user_id:
+        user_db = User.query.get(user_id)
+    if not user_db and login:
+        user_db = User.query.filter_by(username=login).first()
+    return user_db
 
 
 def _score_to_grade(score):
@@ -43,6 +55,10 @@ SEVERITY_WEIGHT = {'critical': 4, 'major': 3, 'minor': 2, 'info': 1,
 @login_required
 def issues_by_category(repo_id):
     """Issue counts grouped by category/module for the donut chart."""
+    user_db = _get_current_user_db()
+    repo = Repository.query.get_or_404(repo_id)
+    if not user_db or repo.connected_by != user_db.id:
+        return jsonify({"error": "Forbidden: Access denied to repository"}), 403
     # Try ScoredIssue (new model) first
     try:
         from models.review import ReviewRun, ScoredIssue
@@ -86,6 +102,10 @@ def issues_by_category(repo_id):
 @login_required
 def risk_heatmap(repo_id):
     """Directory × category heatmap data for the risk grid."""
+    user_db = _get_current_user_db()
+    repo = Repository.query.get_or_404(repo_id)
+    if not user_db or repo.connected_by != user_db.id:
+        return jsonify({"error": "Forbidden: Access denied to repository"}), 403
     grid = {}
 
     # Try ScoredIssue first
@@ -155,6 +175,10 @@ def _heatmap_response(grid):
 @login_required
 def review_activity(repo_id):
     """Reviews grouped by date for the PR activity bar chart."""
+    user_db = _get_current_user_db()
+    repo = Repository.query.get_or_404(repo_id)
+    if not user_db or repo.connected_by != user_db.id:
+        return jsonify({"error": "Forbidden: Access denied to repository"}), 403
     days = request.args.get('days', 30, type=int)
     since = datetime.utcnow() - timedelta(days=days)
 
@@ -185,6 +209,10 @@ def review_activity(repo_id):
 @login_required
 def severity_trend(repo_id):
     """Issue severity counts per review date for the vulnerability trend chart."""
+    user_db = _get_current_user_db()
+    repo = Repository.query.get_or_404(repo_id)
+    if not user_db or repo.connected_by != user_db.id:
+        return jsonify({"error": "Forbidden: Access denied to repository"}), 403
     days = request.args.get('days', 30, type=int)
     since = datetime.utcnow() - timedelta(days=days)
 

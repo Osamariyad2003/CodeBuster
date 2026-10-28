@@ -68,9 +68,9 @@ export default function ReviewsView({ repoId, repoFullName, onRunScan }) {
     return (
         <div className="review-list">
             <h4 className="mb-3" style={{ fontWeight: 600, fontSize: 'clamp(1.1rem, 3vw, 1.25rem)' }}>Recent Reviews</h4>
-            <div className="table-responsive" style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+            <div className="table-responsive" style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', background: 'var(--surface-card)', border: '1px solid var(--border-default)', borderRadius: 14 }}>
                 <Table hover className="align-middle mb-0">
-                    <thead className="table-light">
+                    <thead style={{ background: 'var(--surface-card-elevated)', color: 'var(--text-muted)' }}>
                         <tr>
                             <th className="text-nowrap">PR #</th>
                             <th className="text-nowrap d-none d-md-table-cell">Status</th>

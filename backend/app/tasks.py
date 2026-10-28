@@ -31,7 +31,7 @@ def process_github_event(self, payload):
     from models import db, Review, Issue, Repository
     from services.review_orchestrator import ReviewOrchestrator
     from utils.github_auth import get_installation_access_token
-    from utils.github_client import fetch_pr_files, fetch_all_repo_files
+    from utils.github_client import fetch_pr_files, fetch_all_repo_files, fetch_commit_files
     from utils.github_comment import format_github_comment
     from routes.metrics import update_job
     import os
@@ -113,6 +113,10 @@ def process_github_event(self, payload):
             if event_type == 'pull_request':
                 # Adding 30s timeout for fetching files
                 files = fetch_pr_files(repo_name, pr_data['number'], access_token)
+            elif event_type == 'push':
+                logger.info(f"📁 Fetching changed files for push commit {commit_sha} in {repo_name}...")
+                files = fetch_commit_files(repo_name, commit_sha, access_token)
+                logger.info(f"✅ Fetched {len(files)} files for push review")
             elif event_type == 'full_scan':
                 # Whole-code review: fetch all repo files so orchestrator reads the full codebase
                 branch = repository.default_branch or 'main'
@@ -283,13 +287,21 @@ def run_review_impl(repo_id: str, commit_sha: str, trigger_source: str = "manual
     Fetches the whole repo via fetch_all_repo_files and runs ReviewOrchestrator.analyze() so the review
     reads the full codebase. Returns dict: {"status": "success"|"idempotent"|"error", "review_id": ..., "message": ...}
     """
-    from models import db, Review, Issue, Repository
+    from models import db, Review, Issue, Repository, User
     from services.review_orchestrator import ReviewOrchestrator
     from services.review_merge import merge_to_canonical_review
     from utils.github_auth import get_installation_access_token
     from utils.github_client import fetch_all_repo_files, fetch_repo_commits
     from datetime import datetime
     import uuid
+
+    def _resolve_token(repo):
+        tok = get_installation_access_token(repo.installation_id) if repo.installation_id else None
+        if not tok and repo.connected_by:
+            u = User.query.get(repo.connected_by)
+            if u:
+                tok = u.get_access_token()
+        return tok
 
     logger.info(f"run_review_impl: repo_id={repo_id}, commit_sha={commit_sha}, trigger={trigger_source}")
     review = None
@@ -301,7 +313,7 @@ def run_review_impl(repo_id: str, commit_sha: str, trigger_source: str = "manual
 
         if not commit_sha or commit_sha == "null":
             try:
-                access_token = get_installation_access_token(repository.installation_id)
+                access_token = _resolve_token(repository)
                 if access_token:
                     commits = fetch_repo_commits(
                         repository.full_name, access_token, per_page=1, page=1
@@ -337,9 +349,9 @@ def run_review_impl(repo_id: str, commit_sha: str, trigger_source: str = "manual
         db.session.add(review)
         db.session.commit()
 
-        access_token = get_installation_access_token(repository.installation_id)
+        access_token = _resolve_token(repository)
         if not access_token:
-            raise RuntimeError("Failed to get installation token")
+            raise RuntimeError("Failed to get GitHub access token. Please ensure the GitHub App is installed or re-authorize your account.")
         branch = repository.default_branch or "main"
         # Fetch whole repo so the orchestrator reads the full codebase (all code files with content).
         files = fetch_all_repo_files(repository.full_name, branch, access_token)

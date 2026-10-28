@@ -3,7 +3,7 @@ import { FaShieldAlt, FaCheckCircle, FaExclamationTriangle, FaBolt, FaHistory } 
 
 const CARDS = [
     { key: 'health',          label: 'Health Score',  icon: FaShieldAlt,           fmt: v => v != null ? `${v}%` : '—', g: ['#10B981', '#059669'] },
-    { key: 'total_issues',    label: 'Total Issues',  icon: FaCheckCircle,         fmt: v => v ?? '—',                  g: ['#6366F1', '#4F46E5'] },
+    { key: 'total_issues',    label: 'Total Issues',  icon: FaCheckCircle,         fmt: v => v ?? '—',                  g: ['#FF570A', '#E04600'] },
     { key: 'critical_issues', label: 'Critical',      icon: FaExclamationTriangle, fmt: v => v ?? '—',                  g: ['#EF4444', '#DC2626'] },
     { key: 'events_count',    label: 'Recent Events', icon: FaBolt,                fmt: v => v ?? '—',                  g: ['#0EA5E9', '#0284C7'] },
     { key: 'active_jobs',     label: 'Active Jobs',   icon: FaHistory,             fmt: v => v ?? '—',                  g: ['#F59E0B', '#D97706'] },
@@ -17,18 +17,18 @@ export default function RepoStatsCards({ stats }) {
                     key={key}
                     style={{
                         flex: '1 1 130px', minWidth: 120,
-                        background: '#fff',
-                        border: '1px solid #F1F5F9',
+                        background: 'var(--surface-card, #0E1118)',
+                        border: '1px solid var(--border-default, rgba(255,255,255,0.08))',
                         borderRadius: 14,
                         padding: '16px 18px',
-                        boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
+                        boxShadow: 'var(--shadow-sm)',
                         position: 'relative',
                         overflow: 'hidden',
                         transition: 'box-shadow 0.15s, transform 0.15s',
                         cursor: 'default',
                     }}
-                    onMouseEnter={e => { e.currentTarget.style.boxShadow = '0 6px 24px rgba(0,0,0,0.09)'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
-                    onMouseLeave={e => { e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.04)'; e.currentTarget.style.transform = 'none'; }}
+                    onMouseEnter={e => { e.currentTarget.style.boxShadow = '0 6px 24px rgba(0,0,0,0.4)'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
+                    onMouseLeave={e => { e.currentTarget.style.boxShadow = 'var(--shadow-sm)'; e.currentTarget.style.transform = 'none'; }}
                 >
                     <div style={{
                         position: 'absolute', top: -20, right: -20,
@@ -45,7 +45,7 @@ export default function RepoStatsCards({ stats }) {
                     }}>
                         <Icon size={15} color="#fff" />
                     </div>
-                    <div style={{ fontSize: '1.6rem', fontWeight: 800, color: '#0F172A', lineHeight: 1 }}>
+                    <div style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--text-primary, #F8FAFC)', lineHeight: 1 }}>
                         {fmt(stats?.[key])}
                     </div>
                     <div style={{ fontSize: '0.68rem', fontWeight: 600, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.07em', marginTop: 5 }}>

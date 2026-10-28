@@ -88,13 +88,13 @@ const AgentCard = ({
             onMouseLeave={() => !comingSoon && setHover(false)}
             className="h-100 d-flex flex-column"
             style={{
-                background: 'white',
-                border: '1px solid #E5E7EB',
-                borderRadius: 14,
+                background: 'var(--surface-card)',
+                border: '1px solid var(--border-default)',
+                borderRadius: 16,
                 overflow: 'hidden',
                 boxShadow: hover
-                    ? '0 6px 20px rgba(0, 0, 0, 0.08)'
-                    : '0 1px 2px rgba(0, 0, 0, 0.02)',
+                    ? 'var(--shadow-md), 0 0 0 1px ' + g1 + '40'
+                    : 'var(--shadow-sm)',
                 transform: hover ? 'translateY(-2px)' : 'none',
                 transition: 'transform 0.18s ease, box-shadow 0.18s ease',
                 opacity: comingSoon ? 0.7 : 1,
@@ -134,7 +134,7 @@ const AgentCard = ({
                         <Icon size={22} />
                     </div>
                     <div className="flex-grow-1" style={{ minWidth: 0 }}>
-                        <h5 className="fw-bold mb-1" style={{ color: '#111827', fontSize: '1rem' }}>
+                        <h5 className="fw-bold mb-1" style={{ color: 'var(--text-primary)', fontSize: '1.05rem' }}>
                             {title}
                         </h5>
                         {comingSoon ? (
@@ -171,7 +171,7 @@ const AgentCard = ({
                 {/* Description */}
                 <p
                     className="small mb-3"
-                    style={{ color: '#6B7280', lineHeight: 1.5 }}
+                    style={{ color: 'var(--text-secondary)', lineHeight: 1.5 }}
                 >
                     {description}
                 </p>
@@ -184,15 +184,15 @@ const AgentCard = ({
                                 key={i}
                                 className="flex-grow-1 px-2 py-2 text-center"
                                 style={{
-                                    background: '#F9FAFB',
-                                    border: '1px solid #F3F4F6',
+                                    background: 'var(--surface-card-elevated)',
+                                    border: '1px solid var(--border-subtle)',
                                     borderRadius: 8,
                                 }}
                             >
                                 <div
                                     className="fw-bold"
                                     style={{
-                                        color: s.accent || '#111827',
+                                        color: s.accent || 'var(--text-primary)',
                                         fontSize: '1.1rem',
                                         lineHeight: 1.1,
                                     }}
@@ -234,7 +234,7 @@ const AgentCard = ({
 const BugFixAgentCard = ({ onOpen, stats }) => (
     <AgentCard
         icon={FaBug}
-        gradient={['#4F46E5', '#06B6D4']}
+        gradient={['#FF570A', '#25E2A8']}
         title="Bug Fix Agent"
         description="Automatically generates patches for detected issues, creates a branch on GitHub, and commits the fix for your review."
         stats={[
@@ -290,6 +290,23 @@ const ComingSoonCard = ({ icon, title, description }) => (
         title={title}
         description={description}
         comingSoon
+    />
+);
+
+const AISeniorEngineerAgentCard = ({ onOpen, stats }) => (
+    <AgentCard
+        icon={FaBrain}
+        gradient={['#8B5CF6', '#EC4899']}
+        title="AI Senior Engineer"
+        description="Autonomous architectural intelligence that identifies system bottlenecks, antipatterns, and provides deep contextual reasoning."
+        stats={[
+            { label: 'Insights', value: stats.open },
+            { label: 'Resolved', value: stats.resolved, accent: '#10B981' },
+        ]}
+        buttonVariant="primary"
+        buttonIcon={FaBrain}
+        buttonLabel="View AI insights"
+        onOpen={onOpen}
     />
 );
 
@@ -377,6 +394,13 @@ const AgentsPage = () => {
         resolved: coverageIssues.filter(i => i.status === 'resolved').length,
     }), [coverageIssues]);
 
+    const aiIssues = useMemo(() => filteredIssues.filter(isAIAgentIssue), [filteredIssues]);
+
+    const aiStats = useMemo(() => ({
+        open: aiIssues.filter(i => i.status !== 'resolved').length,
+        resolved: aiIssues.filter(i => i.status === 'resolved').length,
+    }), [aiIssues]);
+
     // Per-repo counts for the selector
     const repoCounts = useMemo(() => {
         const map = {};
@@ -398,9 +422,9 @@ const AgentsPage = () => {
         <div
             className="d-flex align-items-center gap-3 mb-4 px-3 py-2"
             style={{
-                background: 'white',
-                border: '1px solid #E5E7EB',
-                borderRadius: 10,
+                background: 'var(--surface-card)',
+                border: '1px solid var(--border-default)',
+                borderRadius: 12,
                 boxShadow: '0 1px 2px rgba(0, 0, 0, 0.02)',
             }}
         >
@@ -408,7 +432,7 @@ const AgentsPage = () => {
                 style={{
                     width: 32, height: 32, borderRadius: 8,
                     background: selectedRepo === 'all' ? '#F3F4F6' : 'rgba(79, 70, 229, 0.12)',
-                    color: selectedRepo === 'all' ? '#6B7280' : '#4F46E5',
+                    color: selectedRepo === 'all' ? '#6B7280' : '#FF570A',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     flexShrink: 0,
                 }}
@@ -424,7 +448,7 @@ const AgentsPage = () => {
                     value={selectedRepo}
                     onChange={(e) => setSelectedRepo(e.target.value)}
                     className="border-0 px-0 fw-semibold"
-                    style={{ boxShadow: 'none', background: 'transparent', color: '#111827' }}
+                    style={{ boxShadow: 'none', background: 'transparent', color: 'var(--text-primary)' }}
                 >
                     <option value="all">All repositories ({issues.length})</option>
                     {displayOptions.map(name => (
@@ -491,6 +515,152 @@ const AgentsPage = () => {
     const fixAllSecurity = () => runBatch(securityIssues, 'Security');
     const fixAllCoverage = () => runBatch(coverageIssues, 'Test coverage');
 
+    if (view === 'ai') {
+        const openTargets = aiIssues.filter(i => i.status !== 'resolved');
+        const batchRunning = batchProgress && batchProgress.done < batchProgress.total;
+        return (
+            <Container className="py-4" style={{ maxWidth: 1100 }}>
+                <Button variant="link" onClick={() => setView('agents')} className="ps-0 text-decoration-none text-muted mb-3">
+                    ← Back to Agents
+                </Button>
+                <div className="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-3">
+                    <div className="d-flex align-items-center">
+                        <div
+                            style={{
+                                width: 44,
+                                height: 44,
+                                borderRadius: 12,
+                                background: 'linear-gradient(135deg, #8B5CF6, #EC4899)',
+                                color: 'white',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                marginRight: 14,
+                                boxShadow: '0 6px 18px rgba(139, 92, 246, 0.35)',
+                                flexShrink: 0,
+                            }}
+                        >
+                            <FaBrain size={22} />
+                        </div>
+                        <div>
+                            <h3 className="fw-bold mb-0" style={{ color: 'var(--text-primary)' }}>AI Senior Engineer</h3>
+                            <div className="text-muted small">
+                                Architectural insights, antipatterns, and contextual code explanations
+                                {selectedRepo !== 'all' && <> · <strong>{selectedRepo}</strong></>}
+                            </div>
+                        </div>
+                    </div>
+                    {openTargets.length > 0 && (
+                        <Button
+                            variant="primary"
+                            disabled={batchRunning}
+                            onClick={() => runBatch(aiIssues, 'AI Agent')}
+                            style={{ background: 'linear-gradient(135deg, #FF6A26, #FF570A)', border: 'none', borderRadius: 8, fontWeight: 600 }}
+                        >
+                            {batchRunning ? (
+                                <><Spinner size="sm" animation="border" className="me-2" />Fixing {batchProgress.done}/{batchProgress.total}…</>
+                            ) : (
+                                <><FaBrain className="me-2" />Fix All AI Issues ({openTargets.length})</>
+                            )}
+                        </Button>
+                    )}
+                </div>
+
+                {renderRepoFilter()}
+
+                {batchProgress && (
+                    <div className="mb-3">
+                        <ProgressBar
+                            now={(batchProgress.done / batchProgress.total) * 100}
+                            label={`${batchProgress.done}/${batchProgress.total}`}
+                            variant={batchProgress.failed > 0 ? 'warning' : 'success'}
+                        />
+                        <div className="small text-muted mt-1">
+                            {batchProgress.succeeded} succeeded · {batchProgress.failed} failed
+                        </div>
+                    </div>
+                )}
+
+                {loading ? (
+                    <div className="text-center py-5"><Spinner animation="border" /></div>
+                ) : aiIssues.length === 0 ? (
+                    <Alert variant="success" style={{ borderRadius: 12 }}>
+                        No AI-detected architectural or quality concerns flagged. All systems healthy! 🎉
+                    </Alert>
+                ) : (
+                    <Card className="border-0 shadow-sm" style={{ background: 'var(--surface-card)', borderRadius: 14 }}>
+                        <Table hover responsive className="mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Finding</th>
+                                    <th>Dimension</th>
+                                    <th>Severity</th>
+                                    <th>File</th>
+                                    <th>Status</th>
+                                    <th className="text-end">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {aiIssues.map(issue => (
+                                    <tr key={issue.id}>
+                                        <td>
+                                            <div className="fw-semibold" style={{ color: 'var(--text-primary)' }}>{issue.title || issue.message}</div>
+                                            <div className="text-muted small">{issue.repo_name}</div>
+                                        </td>
+                                        <td>
+                                            <span className="cb-badge cb-badge-purple">
+                                                {(issue.category || 'ai-review').replace(/_/g, ' ')}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <Badge bg={issue.severity === 'critical' ? 'danger' : issue.severity === 'major' ? 'warning' : 'secondary'}>
+                                                {issue.severity}
+                                            </Badge>
+                                        </td>
+                                        <td className="small text-monospace">
+                                            {issue.file_path}{issue.line_number ? `:${issue.line_number}` : ''}
+                                        </td>
+                                        <td>
+                                            {issue.status === 'resolved' ? (
+                                                <Badge bg="success"><FaCheckCircle className="me-1" />Resolved</Badge>
+                                            ) : (
+                                                <Badge bg="secondary">Open</Badge>
+                                            )}
+                                        </td>
+                                        <td className="text-end">
+                                            <Button
+                                                size="sm"
+                                                variant="outline-secondary"
+                                                className="me-2"
+                                                onClick={() => navigate(`/issues/${issue.id}`)}
+                                                style={{ borderRadius: 6 }}
+                                            >
+                                                <FaExternalLinkAlt size={12} />
+                                            </Button>
+                                            <Button
+                                                size="sm"
+                                                variant="primary"
+                                                disabled={issue.status === 'resolved' || running[issue.id] || batchRunning}
+                                                onClick={() => runFix(issue)}
+                                                style={{ borderRadius: 6 }}
+                                            >
+                                                {running[issue.id] ? (
+                                                    <><Spinner size="sm" animation="border" className="me-2" />Fixing…</>
+                                                ) : (
+                                                    <><FaPlayCircle className="me-1" />Apply Fix</>
+                                                )}
+                                            </Button>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </Table>
+                    </Card>
+                )}
+            </Container>
+        );
+    }
+
     if (view === 'coverage') {
         const openTargets = coverageIssues.filter(i => i.status !== 'resolved');
         const batchRunning = batchProgress && batchProgress.done < batchProgress.total;
@@ -549,9 +719,9 @@ const AgentsPage = () => {
                 ) : coverageIssues.length === 0 ? (
                     <Alert variant="success">No test-coverage gaps flagged. 🎉</Alert>
                 ) : (
-                    <Card className="border-0 shadow-sm">
+                    <Card className="shadow-sm" style={{ background: 'var(--surface-card)', border: '1px solid var(--border-default)', borderRadius: 14, overflow: 'hidden' }}>
                         <Table hover responsive className="mb-0">
-                            <thead className="bg-light">
+                            <thead style={{ background: 'var(--surface-card-elevated)', color: 'var(--text-muted)' }}>
                                 <tr>
                                     <th>Target</th>
                                     <th>Severity</th>
@@ -579,7 +749,7 @@ const AgentsPage = () => {
                                             {issue.status === 'resolved' ? (
                                                 <Badge bg="success"><FaCheckCircle className="me-1" />Resolved</Badge>
                                             ) : (
-                                                <Badge bg="light" text="dark">Open</Badge>
+                                                <Badge bg="secondary" className="border border-secondary-subtle">Open</Badge>
                                             )}
                                         </td>
                                         <td className="text-end">
@@ -666,9 +836,9 @@ const AgentsPage = () => {
                 ) : securityIssues.length === 0 ? (
                     <Alert variant="success">No security issues detected. 🎉</Alert>
                 ) : (
-                    <Card className="border-0 shadow-sm">
+                    <Card className="shadow-sm" style={{ background: 'var(--surface-card)', border: '1px solid var(--border-default)', borderRadius: 14, overflow: 'hidden' }}>
                         <Table hover responsive className="mb-0">
-                            <thead className="bg-light">
+                            <thead style={{ background: 'var(--surface-card-elevated)', color: 'var(--text-muted)' }}>
                                 <tr>
                                     <th>Issue</th>
                                     <th>Category</th>
@@ -686,7 +856,7 @@ const AgentsPage = () => {
                                             <div className="text-muted small">{issue.repo_name}</div>
                                         </td>
                                         <td>
-                                            <Badge bg="light" text="dark" className="text-uppercase small">
+                                            <Badge bg="secondary" className="border border-secondary-subtle text-uppercase small">
                                                 {(issue.category || 'security').replace(/_/g, ' ')}
                                             </Badge>
                                         </td>
@@ -702,7 +872,7 @@ const AgentsPage = () => {
                                             {issue.status === 'resolved' ? (
                                                 <Badge bg="success"><FaCheckCircle className="me-1" />Resolved</Badge>
                                             ) : (
-                                                <Badge bg="light" text="dark">Open</Badge>
+                                                <Badge bg="secondary" className="border border-secondary-subtle">Open</Badge>
                                             )}
                                         </td>
                                         <td className="text-end">
@@ -765,9 +935,9 @@ const AgentsPage = () => {
                             : <>No issues found for <strong>{selectedRepo}</strong>.</>}
                     </Alert>
                 ) : (
-                    <Card className="border-0 shadow-sm">
+                    <Card className="shadow-sm" style={{ background: 'var(--surface-card)', border: '1px solid var(--border-default)', borderRadius: 14, overflow: 'hidden' }}>
                         <Table hover responsive className="mb-0">
-                            <thead className="bg-light">
+                            <thead style={{ background: 'var(--surface-card-elevated)', color: 'var(--text-muted)' }}>
                                 <tr>
                                     <th>Issue</th>
                                     <th>Severity</th>
@@ -795,7 +965,7 @@ const AgentsPage = () => {
                                             {issue.status === 'resolved' ? (
                                                 <Badge bg="success"><FaCheckCircle className="me-1" />Resolved</Badge>
                                             ) : (
-                                                <Badge bg="light" text="dark">Open</Badge>
+                                                <Badge bg="secondary" className="border border-secondary-subtle">Open</Badge>
                                             )}
                                         </td>
                                         <td className="text-end">
@@ -855,7 +1025,7 @@ const AgentsPage = () => {
                         style={{
                             width: 36, height: 36, borderRadius: 8,
                             background: 'rgba(79, 70, 229, 0.12)',
-                            color: '#4F46E5',
+                            color: '#FF570A',
                             display: 'flex', alignItems: 'center', justifyContent: 'center',
                             flexShrink: 0,
                         }}
@@ -863,27 +1033,30 @@ const AgentsPage = () => {
                         <FaCheckCircle size={16} />
                     </div>
                     <div className="flex-grow-1 small">
-                        No issues found for <strong>{selectedRepo}</strong>. Run a review from the Commits inbox to scan for new findings.
+                        No issues found for <strong>{selectedRepo}</strong>. Run a review from the repository dashboard to scan for new findings.
                     </div>
                     <Button
                         size="sm"
                         variant="outline-primary"
-                        onClick={() => navigate('/commits')}
+                        onClick={() => navigate('/repos')}
                         className="flex-shrink-0"
                     >
-                        Open Commits
+                        Open Repositories
                     </Button>
                 </div>
             )}
 
             <Row className="g-3">
-                <Col md={6} lg={4}>
+                <Col md={6} lg={3}>
+                    <AISeniorEngineerAgentCard onOpen={() => setView('ai')} stats={aiStats} />
+                </Col>
+                <Col md={6} lg={3}>
                     <BugFixAgentCard onOpen={() => setView('bugfix')} stats={stats} />
                 </Col>
-                <Col md={6} lg={4}>
+                <Col md={6} lg={3}>
                     <SecurityAgentCard onOpen={() => setView('security')} stats={securityStats} />
                 </Col>
-                <Col md={6} lg={4}>
+                <Col md={6} lg={3}>
                     <TestCoverageAgentCard onOpen={() => setView('coverage')} stats={coverageStats} />
                 </Col>
             </Row>

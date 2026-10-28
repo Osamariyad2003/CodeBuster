@@ -25,6 +25,19 @@ def login_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
+
+def _get_current_user_db():
+    """Helper to resolve current User model instance from session."""
+    user_session = session.get('user') or {}
+    user_id = user_session.get('id')
+    login = user_session.get('login') or user_session.get('username')
+    user_db = None
+    if user_id:
+        user_db = User.query.get(user_id)
+    if not user_db and login:
+        user_db = User.query.filter_by(username=login).first()
+    return user_db
+
 @repos_bp.route('', methods=['GET'])
 @login_required
 def get_repos():
@@ -55,7 +68,7 @@ def get_repos():
         if latest_review:
             repo_dict['last_review_at'] = latest_review.completed_at.isoformat() if latest_review.completed_at else None
             repo_dict['health_score'] = latest_review.overall_health_score
-            repo_dict['overall_grade'] = _score_to_grade(latest_review.overall_health_score or 0)
+            repo_dict['overall_grade'] = _score_to_grade(latest_review.overall_health_score) if latest_review.overall_health_score is not None else ('A' if latest_review.status == 'completed' and repo_dict.get('issues_count', 0) == 0 else None)
         else:
             repo_dict['last_review_at'] = None
             repo_dict['health_score'] = None
@@ -71,7 +84,10 @@ def get_repos():
 @login_required
 def get_repo_detail(repo_id):
     """Fetch repository details."""
+    user_db = _get_current_user_db()
     repo = Repository.query.get_or_404(repo_id)
+    if not user_db or repo.connected_by != user_db.id:
+        return jsonify({"error": "Forbidden: Access denied to repository"}), 403
     return jsonify({
         "success": True,
         "repo": repo.to_dict()
@@ -82,7 +98,10 @@ def get_repo_detail(repo_id):
 @login_required
 def get_repo_health(repo_id):
     """Fetch repo health (latest score, grade, review id). Used by RepoListPage."""
+    user_db = _get_current_user_db()
     repo = Repository.query.get_or_404(repo_id)
+    if not user_db or repo.connected_by != user_db.id:
+        return jsonify({"error": "Forbidden: Access denied to repository"}), 403
     latest = Review.query.filter_by(repository_id=repo_id, status='completed').order_by(
         Review.completed_at.desc()
     ).first()
@@ -98,24 +117,36 @@ def get_repo_health(repo_id):
 @login_required
 def get_repo_settings(repo_id):
     """Fetch repository settings."""
+    user_db = _get_current_user_db()
     repo = Repository.query.get_or_404(repo_id)
+    if not user_db or repo.connected_by != user_db.id:
+        return jsonify({"error": "Forbidden: Access denied to repository settings"}), 403
     return jsonify({
         "success": True,
         "settings": repo.get_config()
     })
 
-@repos_bp.route('/<repo_id>/settings', methods=['PUT'])
+@repos_bp.route('/<repo_id>/settings', methods=['PUT', 'PATCH'])
 @login_required
 def update_repo_settings(repo_id):
     """Update repository settings."""
     try:
+        user_db = _get_current_user_db()
         repo = Repository.query.get_or_404(repo_id)
+        if not user_db or repo.connected_by != user_db.id:
+            return jsonify({"error": "Forbidden: Access denied to repository settings"}), 403
+
         data = request.get_json(force=True)
         if not data or not isinstance(data, dict):
             return jsonify({"error": "Invalid JSON body"}), 400
 
-        # Update settings
-        repo.set_config(data)
+        # Update settings (merge if PATCH)
+        current_cfg = repo.get_config() or {}
+        if request.method == 'PATCH':
+            current_cfg.update(data)
+            repo.set_config(current_cfg)
+        else:
+            repo.set_config(data)
         db.session.commit()
 
         return jsonify({
@@ -132,6 +163,10 @@ def update_repo_settings(repo_id):
 def get_repo_reviews(repo_id):
     """List reviews for a specific repository."""
     try:
+        user_db = _get_current_user_db()
+        repo = Repository.query.get_or_404(repo_id)
+        if not user_db or repo.connected_by != user_db.id:
+            return jsonify({"error": "Forbidden: Access denied to repository"}), 403
         page = max(1, request.args.get('page', 1, type=int))
         per_page = max(1, min(100, request.args.get('pageSize', 10, type=int)))
         limit = max(1, min(100, request.args.get('limit', per_page, type=int)))
@@ -167,6 +202,13 @@ def get_repo_reviews(repo_id):
 def get_review_issues_for_repo(repo_id, review_id):
     """Get issues for a specific review, scoped to the repo."""
     try:
+        user_db = _get_current_user_db()
+        repo = Repository.query.get_or_404(repo_id)
+        if not user_db or repo.connected_by != user_db.id:
+            return jsonify({"error": "Forbidden: Access denied to repository"}), 403
+        review = Review.query.get_or_404(review_id)
+        if review.repository_id != repo.id:
+            return jsonify({"error": "Review does not belong to repository"}), 404
         limit = min(200, request.args.get('limit', 100, type=int))
         file_filter = request.args.get('file')
         query = Issue.query.filter_by(review_id=review_id)
@@ -188,7 +230,10 @@ def get_review_issues_for_repo(repo_id, review_id):
 @login_required
 def get_latest_review(repo_id):
     """Get latest review summary + category scores + top issues."""
+    user_db = _get_current_user_db()
     repo = Repository.query.get_or_404(repo_id)
+    if not user_db or repo.connected_by != user_db.id:
+        return jsonify({"error": "Forbidden: Access denied to repository"}), 403
     latest = Review.query.filter_by(repository_id=repo_id, status='completed')\
         .order_by(Review.completed_at.desc()).first()
     if not latest:
@@ -228,6 +273,10 @@ def get_latest_review(repo_id):
 @login_required
 def get_score_trend(repo_id):
     """Get score trend for chart (e.g. last 7 or 30 days)."""
+    user_db = _get_current_user_db()
+    repo = Repository.query.get_or_404(repo_id)
+    if not user_db or repo.connected_by != user_db.id:
+        return jsonify({"error": "Forbidden: Access denied to repository"}), 403
     days = request.args.get('days', 30, type=int)
     from datetime import datetime, timedelta
     since = datetime.utcnow() - timedelta(days=days)
@@ -244,7 +293,10 @@ def get_score_trend(repo_id):
 @login_required
 def get_repo_commits(repo_id):
     """Fetch commit history for a repository."""
+    user_db = _get_current_user_db()
     repo = Repository.query.get_or_404(repo_id)
+    if not user_db or repo.connected_by != user_db.id:
+        return jsonify({"error": "Forbidden: Access denied to repository"}), 403
     page = request.args.get('page', 1, type=int)
     per_page = request.args.get('per_page', 30, type=int)
     
@@ -263,7 +315,7 @@ def get_repo_commits(repo_id):
             access_token = user_session.get('access_token')
             print(f"[OK] Using OAuth token for {repo.full_name}")
         else:
-            print(f"[WARN]️ No OAuth token in session for {repo.full_name}")
+            print(f"[WARN] No OAuth token in session for {repo.full_name}")
     
     if not access_token:
         return jsonify({
@@ -321,7 +373,10 @@ def trigger_repo_scan(repo_id):
     """
     import os
     import threading
+    user_db = _get_current_user_db()
     repo = Repository.query.get_or_404(repo_id)
+    if not user_db or repo.connected_by != user_db.id:
+        return jsonify({"error": "Forbidden: Access denied to repository"}), 403
     data = (request.get_json(silent=True)) or {}
     commit_sha = data.get('commit_sha')
     use_inline = os.getenv("RUN_SCAN_INLINE", "").strip().lower() in ("1", "true", "yes")

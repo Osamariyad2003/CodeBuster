@@ -5,9 +5,9 @@ def format_github_comment(issue_data):
         'critical': '🔴',
         'major': '🟠',
         'minor': '🟡',
-        'info': 'ℹ️'
+        'info': 'ℹ'
     }
-    emoji = severity_emoji.get(issue_data.get('severity', 'minor'), 'ℹ️')
+    emoji = severity_emoji.get(issue_data.get('severity', 'minor'), 'ℹ')
     
     comment = f"""## {emoji} {issue_data.get('severity', 'minor').title()}: {issue_data.get('title', 'Issue')}
 

@@ -91,7 +91,7 @@ export default function CommitsView({ repoId, onScanTriggered, onRunScanForCommi
             <h5 className="mb-4">Recent Commits</h5>
             <div className="table-responsive">
                 <Table hover className="align-middle">
-                    <thead className="table-light">
+                    <thead style={{ background: 'var(--surface-card-elevated)', color: 'var(--text-muted)' }}>
                         <tr>
                             <th>Message</th>
                             <th>Author</th>
@@ -131,7 +131,7 @@ export default function CommitsView({ repoId, onScanTriggered, onRunScanForCommi
                                     </div>
                                 </td>
                                 <td>
-                                    <Badge bg="light" text="dark" className="border">
+                                    <Badge bg="secondary" className="border border-secondary-subtle">
                                         <code>{commit.sha.substring(0, 7)}</code>
                                     </Badge>
                                     <Button

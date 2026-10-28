@@ -44,7 +44,7 @@ const TrendDot = (props) => {
 };
 
 const StatCard = ({ icon: Icon, label, value, sub, loading }) => (
-    <Card className="h-100 shadow-sm" style={{ border: '1px solid var(--border-subtle, #e9ecef)', borderRadius: '12px' }}>
+    <Card className="h-100 shadow-sm" style={{ background: 'var(--surface-card, #0E1118)', border: '1px solid var(--border-default, rgba(255, 255, 255, 0.08))', borderRadius: '12px' }}>
         <Card.Body style={{ padding: '16px' }}>
             {loading ? (
                 <Skeleton height="64px" />
@@ -52,7 +52,7 @@ const StatCard = ({ icon: Icon, label, value, sub, loading }) => (
                 <div className="d-flex align-items-center gap-3">
                     <div
                         className="d-flex align-items-center justify-content-center"
-                        style={{ width: 40, height: 40, borderRadius: 10, background: 'var(--surface-muted, #f3f4f6)', flexShrink: 0 }}
+                        style={{ width: 40, height: 40, borderRadius: 10, background: 'var(--surface-muted, rgba(255, 255, 255, 0.06))', flexShrink: 0 }}
                     >
                         <Icon size={18} color="var(--primary-brand, #3b82f6)" />
                     </div>
@@ -238,8 +238,8 @@ const FeedbackInsightsPage = () => {
                 </Col>
             </Row>
 
-            <Card className="shadow-sm" style={{ border: '1px solid var(--border-subtle, #e9ecef)', borderRadius: '12px' }}>
-                <Card.Header className="bg-transparent border-bottom fw-bold" style={{ padding: '12px 16px', fontSize: '0.95rem' }}>
+            <Card className="shadow-sm" style={{ background: 'var(--surface-card, #0E1118)', border: '1px solid var(--border-default, rgba(255, 255, 255, 0.08))', borderRadius: '12px' }}>
+                <Card.Header className="bg-transparent border-bottom fw-bold" style={{ padding: '12px 16px', fontSize: '0.95rem', borderColor: 'var(--border-subtle, rgba(255, 255, 255, 0.05))' }}>
                     Most disputed categories
                 </Card.Header>
                 <Card.Body style={{ padding: 0 }}>
@@ -302,7 +302,7 @@ const FeedbackInsightsPage = () => {
                                         {isOpen && hasLocations && (
                                             <tr>
                                                 <td></td>
-                                                <td colSpan={6} style={{ padding: '4px 16px 12px', background: 'var(--surface-muted, #f8f9fa)' }}>
+                                                <td colSpan={6} style={{ padding: '4px 16px 12px', background: 'var(--surface-muted, rgba(255, 255, 255, 0.04))' }}>
                                                     <div className="text-muted mb-1" style={{ fontSize: '0.72rem' }}>
                                                         Dismissed findings in this category — jump to the review to see them in context:
                                                     </div>

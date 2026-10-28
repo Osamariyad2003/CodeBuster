@@ -679,7 +679,7 @@ const ProjectDropzone = ({ onReviewComplete }) => {
                 onClick={() => folderInputRef.current?.click()}
                 className="d-flex align-items-center gap-2 mx-auto"
                 style={{
-                  background: 'linear-gradient(135deg, #6366f1 0%, #a855f7 100%)',
+                  background: 'linear-gradient(135deg, #FF570A 0%, #FF7A30 100%)',
                   border: 'none',
                   padding: '10px 24px',
                   borderRadius: 12,
@@ -737,7 +737,7 @@ const ProjectDropzone = ({ onReviewComplete }) => {
                 onClick={() => folderInputRef.current?.click()}
                 className="d-flex align-items-center gap-2 mx-auto"
                 style={{
-                  background: 'linear-gradient(135deg, #6366f1 0%, #a855f7 100%)',
+                  background: 'linear-gradient(135deg, #FF570A 0%, #FF7A30 100%)',
                   border: 'none',
                   padding: '14px 32px',
                   borderRadius: 12,
@@ -765,14 +765,14 @@ const ProjectDropzone = ({ onReviewComplete }) => {
                 >
                   {['JavaScript', 'TypeScript', 'Python', 'Java', 'C/C++', 'Go', 'Ruby', 'PHP'].map((lang, idx) => {
                     const colors = [
-                      { bg: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)', color: '#d97706', border: 'rgba(245, 158, 11, 0.8)' },
-                      { bg: 'linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%)', color: '#1d4ed8', border: 'rgba(59, 130, 246, 0.8)' },
-                      { bg: 'linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%)', color: '#047857', border: 'rgba(16, 185, 129, 0.8)' },
-                      { bg: 'linear-gradient(135deg, #fee2e2 0%, #fecaca 100%)', color: '#b91c1c', border: 'rgba(239, 68, 68, 0.8)' },
-                      { bg: 'linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%)', color: '#4338ca', border: 'rgba(99, 102, 241, 0.8)' },
-                      { bg: 'linear-gradient(135deg, #f3e8ff 0%, #e9d5ff 100%)', color: '#7c3aed', border: 'rgba(168, 85, 247, 0.8)' },
-                      { bg: 'linear-gradient(135deg, #fce7f3 0%, #fbcfe8 100%)', color: '#be185d', border: 'rgba(236, 72, 153, 0.8)' },
-                      { bg: 'linear-gradient(135deg, #cffafe 0%, #a5f3fc 100%)', color: '#0e7490', border: 'rgba(6, 182, 212, 0.8)' }
+                      { bg: 'rgba(245, 158, 11, 0.12)', color: '#FBBF24', border: 'rgba(245, 158, 11, 0.3)' },
+                      { bg: 'rgba(59, 130, 246, 0.12)', color: '#60A5FA', border: 'rgba(59, 130, 246, 0.3)' },
+                      { bg: 'rgba(37, 226, 168, 0.12)', color: '#25E2A8', border: 'rgba(37, 226, 168, 0.3)' },
+                      { bg: 'rgba(239, 68, 68, 0.12)', color: '#F87171', border: 'rgba(239, 68, 68, 0.3)' },
+                      { bg: 'rgba(104, 127, 245, 0.12)', color: '#818CF8', border: 'rgba(104, 127, 245, 0.3)' },
+                      { bg: 'rgba(168, 85, 247, 0.12)', color: '#C084FC', border: 'rgba(168, 85, 247, 0.3)' },
+                      { bg: 'rgba(236, 72, 153, 0.12)', color: '#F472B6', border: 'rgba(236, 72, 153, 0.3)' },
+                      { bg: 'rgba(6, 182, 212, 0.12)', color: '#38BDF8', border: 'rgba(6, 182, 212, 0.3)' }
                     ];
                     const colorScheme = colors[idx % colors.length];
                     return (
@@ -783,7 +783,7 @@ const ProjectDropzone = ({ onReviewComplete }) => {
                           color: colorScheme.color,
                           padding: '10px 18px',
                           fontWeight: 700,
-                          border: `2px solid ${colorScheme.border}`,
+                          border: `1px solid ${colorScheme.border}`,
                           borderRadius: '12px',
                           fontSize: '0.875rem',
                           letterSpacing: '0.3px',
@@ -830,7 +830,7 @@ const ProjectDropzone = ({ onReviewComplete }) => {
                 <h6 className="mb-0" style={{ fontWeight: 700 }}>Project Structure</h6>
                 <Badge
                   style={{
-                    background: 'linear-gradient(135deg, #6366f1 0%, #a855f7 100%)',
+                    background: 'linear-gradient(135deg, #FF570A 0%, #FF7A30 100%)',
                     padding: '6px 12px',
                     fontWeight: 600
                   }}

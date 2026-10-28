@@ -5,7 +5,7 @@ from functools import wraps
 from datetime import datetime
 import uuid
 
-from models import db, Review, Issue, Repository
+from models import db, Review, Issue, Repository, User
 
 logger = logging.getLogger(__name__)
 from services.review_orchestrator import ReviewOrchestrator
@@ -34,19 +34,36 @@ def login_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
+
+def _get_current_user_db():
+    """Helper to resolve current User model instance from session."""
+    user_session = session.get('user') or {}
+    user_id = user_session.get('id')
+    login = user_session.get('login') or user_session.get('username')
+    user_db = None
+    if user_id:
+        user_db = User.query.get(user_id)
+    if not user_db and login:
+        user_db = User.query.filter_by(username=login).first()
+    return user_db
+
 @review_bp.route('', methods=['GET'])
 @login_required
 def get_reviews():
-    """Get list of reviews."""
+    """Get list of reviews scoped to authenticated user's repositories."""
     try:
-        user_session = session.get('user')
-        if not user_session:
+        user_db = _get_current_user_db()
+        if not user_db:
             return jsonify({"error": "Unauthorized"}), 401
             
         page = int(request.args.get('page', 1))
         limit = int(request.args.get('page_size', request.args.get('limit', 20)))
 
-        query = Review.query
+        user_repo_ids = [r.id for r in Repository.query.with_entities(Repository.id).filter_by(connected_by=user_db.id).all()]
+        if not user_repo_ids:
+            return jsonify({"reviews": [], "total": 0})
+
+        query = Review.query.filter(Review.repository_id.in_(user_repo_ids))
 
         pagination = query.order_by(Review.created_at.desc()).paginate(page=page, per_page=limit, error_out=False)
 
@@ -104,6 +121,11 @@ def review_code():
 
         repository_id = validated_data.repository_id
         files = validated_data.files
+
+        user_db = _get_current_user_db()
+        repo = Repository.query.get(repository_id)
+        if not user_db or not repo or repo.connected_by != user_db.id:
+            return jsonify({"error": "Forbidden: Access denied to this repository"}), 403
         
         # Create initial review record as placeholder for the job
         review_id = str(uuid.uuid4())
@@ -142,7 +164,14 @@ def review_code():
 def get_review_canonical(review_id):
     """Get review in production-ready canonical format (codebuster.commit_review)."""
     try:
+        user_db = _get_current_user_db()
+        if not user_db:
+            return jsonify({"error": "Unauthorized"}), 401
+
         review = Review.query.get_or_404(review_id)
+        repository = Repository.query.get(review.repository_id) if review.repository_id else None
+        if repository and repository.connected_by and repository.connected_by != user_db.id:
+            return jsonify({"error": "Forbidden: Access denied to this review"}), 403
         repository = Repository.query.get(review.repository_id) if review.repository_id else None
         issues = Issue.query.filter_by(review_id=review_id).all()
         from services.commit_review_canonical_builder import build_canonical_from_review
@@ -161,6 +190,7 @@ def get_review_canonical(review_id):
 
 
 @review_bp.route('/<review_id>', methods=['GET'])
+@login_required
 def get_review(review_id):
     """Get a specific review.
 
@@ -169,9 +199,17 @@ def get_review(review_id):
     mapping on the client side.
     """
     try:
+        user_db = _get_current_user_db()
+        if not user_db:
+            return jsonify({"error": "Unauthorized"}), 401
+
         review = Review.query.get(review_id)
         if not review:
             return jsonify({"error": "Review not found"}), 404
+
+        repo = Repository.query.get(review.repository_id) if review.repository_id else None
+        if repo and repo.connected_by and repo.connected_by != user_db.id:
+            return jsonify({"error": "Forbidden: Access denied to this review"}), 403
 
         # Optional severity / category filters (used by the frontend filter bar)
         severity_filter = request.args.get("severity")
@@ -186,7 +224,14 @@ def get_review(review_id):
             )
         issues = query.all()
 
-        grade = _score_to_grade(review.overall_health_score or 0)
+        grade = None
+        if review.status == 'completed':
+            if review.overall_health_score is not None:
+                grade = _score_to_grade(review.overall_health_score)
+            elif len(issues) == 0:
+                grade = 'A'
+        elif review.status != 'failed' and review.overall_health_score is not None:
+            grade = _score_to_grade(review.overall_health_score)
 
         # Map category_scores from JSON string/dict to the list format the
         # frontend expects: [{key, label, score}, …]
@@ -246,13 +291,24 @@ def get_review(review_id):
                 "ai_explanation": explanation,
             })
 
+        extra_meta = review.get_extra_metadata() if hasattr(review, "get_extra_metadata") else {}
+        computed_score = review.overall_health_score
+        if review.status == 'completed' and len(findings) == 0 and computed_score is None:
+            computed_score = 100
+
         return jsonify({
             "id": review.id,
             "repo_id": review.repository_id,
-            "overall_score": review.overall_health_score,
+            "status": review.status,
+            "error_message": getattr(review, "error_message", None),
+            "commit_sha": review.commit_sha,
+            "branch": review.branch,
+            "pr_number": review.pr_number,
+            "overall_score": computed_score,
             "overall_grade": grade,
             "category_scores": cat_list,
             "findings": findings,
+            "extra_metadata": extra_meta,
             "created_at": review.created_at.isoformat() if review.created_at else None,
             "completed_at": review.completed_at.isoformat() if review.completed_at else None,
         })
@@ -263,6 +319,7 @@ def get_review(review_id):
 
 
 def _score_to_grade(score):
+    if score is None: return None
     if score >= 90: return 'A'
     if score >= 80: return 'B'
     if score >= 70: return 'C'
@@ -275,7 +332,15 @@ def _score_to_grade(score):
 def get_review_issues(review_id):
     """Get paginated, filterable issues for a review."""
     try:
-        Review.query.get_or_404(review_id)
+        user_db = _get_current_user_db()
+        if not user_db:
+            return jsonify({"error": "Unauthorized"}), 401
+
+        review = Review.query.get_or_404(review_id)
+        repo = Repository.query.get(review.repository_id) if review.repository_id else None
+        if repo and repo.connected_by and repo.connected_by != user_db.id:
+            return jsonify({"error": "Forbidden: Access denied to these issues"}), 403
+
         severity = request.args.get('severity')
         category = request.args.get('category')  # module/category
         search = request.args.get('search', '').strip()
@@ -293,8 +358,14 @@ def get_review_issues(review_id):
                 Issue.title.ilike(f'%{search}%') | Issue.description.ilike(f'%{search}%')
             )
         if sort == 'severity':
-            sev_order = {'critical': 1, 'major': 2, 'minor': 3, 'info': 4}
-            query = query.order_by(Issue.severity.asc())
+            sev_order = db.case(
+                (Issue.severity == 'critical', 1),
+                (Issue.severity == 'major', 2),
+                (Issue.severity == 'minor', 3),
+                (Issue.severity == 'info', 4),
+                else_=5
+            )
+            query = query.order_by(sev_order.asc())
         elif sort == 'confidence':
             query = query.order_by(Issue.confidence.desc().nullslast())
         else:

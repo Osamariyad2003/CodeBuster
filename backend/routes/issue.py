@@ -1,7 +1,7 @@
 """Issue routes."""
 from flask import Blueprint, jsonify, request, session
 from functools import wraps
-from models import db, Issue, Review, Repository
+from models import db, Issue, Review, Repository, User
 
 issue_bp = Blueprint('issue', __name__, url_prefix='/api/issues')
 
@@ -13,24 +13,71 @@ def login_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
+
+def _get_current_user_db():
+    user_session = session.get('user') or {}
+    user_id = user_session.get('id')
+    login = user_session.get('login') or user_session.get('username')
+    user_db = None
+    if user_id:
+        user_db = User.query.get(user_id)
+    if not user_db and login:
+        user_db = User.query.filter_by(username=login).first()
+    return user_db
+
 @issue_bp.route('', methods=['GET'])
 @login_required
 def get_issues():
-    """Get list of issues with filtering."""
+    """Get list of issues with filtering scoped to current user."""
     try:
+        user_db = _get_current_user_db()
+        if not user_db:
+            return jsonify({"error": "Unauthorized"}), 401
+
         page = int(request.args.get('page', 1))
         limit = int(request.args.get('limit', 10))
         severity = request.args.get('severity')
         category = request.args.get('category')
+        status = request.args.get('status')
+        repo_id = request.args.get('repo_id')
+        patch_status = request.args.get('patch_status')
+        search_query = request.args.get('q') or request.args.get('search')
         
-        # Use a base query with joined loading to optimize DB performance
-        # This prevents the N+1 query problem by loading review and repo info in one go
-        query = db.session.query(Issue)
+        user_repo_ids = [r.id for r in Repository.query.with_entities(Repository.id).filter_by(connected_by=user_db.id).all()]
+        if not user_repo_ids:
+            return jsonify({"success": True, "data": [], "total_pages": 0, "current_page": 1, "total_count": 0})
+
+        if repo_id:
+            matched_repo = Repository.query.filter(
+                Repository.connected_by == user_db.id,
+                db.or_(Repository.id == repo_id, Repository.full_name == repo_id, Repository.name == repo_id)
+            ).first()
+            if matched_repo:
+                user_review_ids = [r.id for r in Review.query.with_entities(Review.id).filter_by(repository_id=matched_repo.id).all()]
+            else:
+                return jsonify({'success': True, 'data': [], 'total_pages': 0, 'current_page': 1, 'total_count': 0})
+        else:
+            user_review_ids = [r.id for r in Review.query.with_entities(Review.id).filter(Review.repository_id.in_(user_repo_ids)).all()]
+        if not user_review_ids:
+            return jsonify({"success": True, "data": [], "total_pages": 0, "current_page": 1, "total_count": 0})
+
+        query = db.session.query(Issue).filter(Issue.review_id.in_(user_review_ids))
         
         if severity:
             query = query.filter(Issue.severity == severity)
         if category:
             query = query.filter(Issue.category == category)
+        if status:
+            query = query.filter(Issue.status == status)
+        if patch_status == 'ready':
+            query = query.filter(Issue.suggested_fix.isnot(None), Issue.suggested_fix != '', Issue.suggested_fix != '{}', Issue.status != 'resolved')
+        elif patch_status == 'applied':
+            query = query.filter(Issue.status == 'resolved')
+        elif patch_status == 'pending':
+            query = query.filter(db.or_(Issue.suggested_fix.is_(None), Issue.suggested_fix == '', Issue.suggested_fix == '{}'))
+        if search_query:
+            term = f'%{search_query.strip()}%'
+            query = query.filter(db.or_(Issue.title.ilike(term), Issue.file_path.ilike(term), Issue.description.ilike(term)))
             
         # Default sort by created_at desc (newest first)
         query = query.order_by(Issue.created_at.desc())
@@ -78,13 +125,21 @@ def get_issues():
 def get_issue(issue_id):
     """Get issue detail."""
     try:
-        # Use modern SQLAlchemy 2.0 fetching style
+        user_db = _get_current_user_db()
+        if not user_db:
+            return jsonify({"success": False, "error": "Unauthorized"}), 401
+
         issue = db.session.get(Issue, issue_id)
         if not issue:
             return jsonify({
                 "success": False,
                 "error": "Issue not found"
             }), 404
+
+        review = issue.review
+        repo = review.repository if review else None
+        if repo and repo.connected_by and repo.connected_by != user_db.id:
+            return jsonify({"success": False, "error": "Forbidden: Access denied"}), 403
             
         result = issue.to_dict()
         

@@ -67,29 +67,100 @@ def record_job(job_id, delivery_id, repo, status='pending'):
     except Exception:
         return None
 
+_UPDATE_JOB_LUA = """
+local key = KEYS[1]
+local job_id = ARGV[1]
+local update_raw = ARGV[2]
+local updates = cjson.decode(update_raw)
+local items = redis.call('LRANGE', key, 0, -1)
+for i, item_str in ipairs(items) do
+    local ok, item = pcall(cjson.decode, item_str)
+    if ok and item['job_id'] == job_id then
+        for k, v in pairs(updates) do
+            item[k] = v
+        end
+        local new_str = cjson.encode(item)
+        redis.call('LSET', key, i - 1, new_str)
+        return new_str
+    end
+end
+return nil
+"""
+
 def update_job(job_id, **kwargs):
-    """Update a job's status in Redis."""
+    """Update a job's status in Redis atomically to prevent index-shift race conditions."""
     try:
         r = get_redis()
-        # Find and update in list (atomic iteration replacement)
+        updates = dict(kwargs)
+        if updates.get('status') in ['completed', 'failed']:
+            now_iso = datetime.utcnow().isoformat()
+            updates['completed_at'] = now_iso
+
+        # 1. Try atomic Lua script execution first
+        try:
+            lua_result = r.eval(_UPDATE_JOB_LUA, 1, REDIS_KEY_JOBS, job_id, json.dumps(updates))
+            if lua_result:
+                res_obj = json.loads(lua_result)
+                if updates.get('status') in ['completed', 'failed'] and res_obj.get('started_at'):
+                    try:
+                        started = datetime.fromisoformat(res_obj['started_at'])
+                        res_obj['duration_ms'] = int((datetime.utcnow() - started).total_seconds() * 1000)
+                    except Exception:
+                        pass
+                return res_obj
+        except Exception:
+            pass
+
+        # 2. Resilient fallback with identifier verification before LSET
         jobs_raw = r.lrange(REDIS_KEY_JOBS, 0, -1)
         for i, item_json in enumerate(jobs_raw):
-            job = json.loads(item_json)
-            if job['job_id'] == job_id:
-                job.update(kwargs)
-                if kwargs.get('status') in ['completed', 'failed'] and job.get('started_at'):
-                    started = datetime.fromisoformat(job['started_at'])
-                    job['completed_at'] = datetime.utcnow().isoformat()
-                    job['duration_ms'] = int((datetime.utcnow() - started).total_seconds() * 1000)
-                
-                r.lset(REDIS_KEY_JOBS, i, json.dumps(job))
-                return job
+            try:
+                job = json.loads(item_json)
+            except Exception:
+                continue
+            if job.get('job_id') == job_id:
+                job.update(updates)
+                if updates.get('status') in ['completed', 'failed'] and job.get('started_at'):
+                    try:
+                        started = datetime.fromisoformat(job['started_at'])
+                        job['completed_at'] = datetime.utcnow().isoformat()
+                        job['duration_ms'] = int((datetime.utcnow() - started).total_seconds() * 1000)
+                    except Exception:
+                        pass
+                # Verify element at index before LSET to prevent race corruption
+                cur = r.lindex(REDIS_KEY_JOBS, i)
+                if cur:
+                    try:
+                        cur_job = json.loads(cur)
+                        if cur_job.get('job_id') == job_id:
+                            r.lset(REDIS_KEY_JOBS, i, json.dumps(job))
+                            return job
+                    except Exception:
+                        pass
     except Exception:
         pass
     return None
 
 from models import db, Review, Issue
 from sqlalchemy import func
+
+
+def _get_current_user_and_repos():
+    from models import User, Repository
+    user_session = session.get('user') or {}
+    user_id = user_session.get('id')
+    login = user_session.get('login') or user_session.get('username')
+    user_db = None
+    if user_id:
+        user_db = User.query.get(user_id)
+    if not user_db and login:
+        user_db = User.query.filter_by(username=login).first()
+    if not user_db:
+        return None, [], set()
+    user_repos = Repository.query.filter_by(connected_by=user_db.id).all()
+    user_repo_ids = [r.id for r in user_repos]
+    user_repo_names = {r.full_name.lower() for r in user_repos if r.full_name}
+    return user_db, user_repo_ids, user_repo_names
 
 @metrics_bp.route('/metrics/summary', methods=['GET'])
 @metrics_bp.route('/monitoring/summary', methods=['GET']) # Added alias for frontend
@@ -98,41 +169,45 @@ def get_metrics_summary():
     """Get summary metrics for the dashboard."""
     webhook_events = []
     analysis_jobs = []
-    
+    user_db, user_repo_ids, user_repo_names = _get_current_user_and_repos()
+
     try:
         r = get_redis()
         events_raw = r.lrange(REDIS_KEY_EVENTS, 0, -1)
         jobs_raw = r.lrange(REDIS_KEY_JOBS, 0, -1)
         
-        webhook_events = [json.loads(e) for e in events_raw]
-        analysis_jobs = [json.loads(j) for j in jobs_raw]
+        webhook_events = [json.loads(e) for e in events_raw if json.loads(e).get('repo', '').lower() in user_repo_names]
+        analysis_jobs = [json.loads(j) for j in jobs_raw if json.loads(j).get('repo', '').lower() in user_repo_names]
     except Exception as e:
         print(f"Redis error: {e}")
-        # Continue with empty events/jobs
         
     try:
-        # Dashboard Counts
         total_events = len(webhook_events)
         total_jobs = len(analysis_jobs)
         
-        # 1. Health Score (Average of last 10 reviews)
-        avg_health = db.session.query(func.avg(Review.overall_health_score)).\
-            filter(Review.status == 'completed').\
-            order_by(Review.completed_at.desc()).limit(1).scalar()
+        if user_repo_ids:
+            avg_health = db.session.query(func.avg(Review.overall_health_score)).\
+                filter(Review.status == 'completed', Review.repository_id.in_(user_repo_ids)).scalar()
+            user_review_ids = [r.id for r in Review.query.with_entities(Review.id).filter(Review.repository_id.in_(user_repo_ids)).all()]
+            if user_review_ids:
+                accepted_issues = db.session.query(func.count(Issue.id)).\
+                    filter(Issue.review_id.in_(user_review_ids), Issue.status.in_(['resolved', 'accepted'])).scalar() or 0
+                critical_issues = db.session.query(func.count(Issue.id)).\
+                    filter(Issue.review_id.in_(user_review_ids), Issue.severity == 'critical', Issue.status == 'open').scalar() or 0
+                avg_conf = db.session.query(func.avg(Issue.confidence)).\
+                    filter(Issue.review_id.in_(user_review_ids)).scalar() or 0
+            else:
+                accepted_issues = 0
+                critical_issues = 0
+                avg_conf = 0
+        else:
+            avg_health = 100
+            accepted_issues = 0
+            critical_issues = 0
+            avg_conf = 0
         
         if avg_health is None:
             avg_health = 100
-            
-        # 2. Accepted Issues (Status = resolved/accepted)
-        accepted_issues = db.session.query(func.count(Issue.id)).\
-            filter(Issue.status.in_(['resolved', 'accepted'])).scalar() or 0
-            
-        # 3. Critical Issues (Severity = critical, status = open)
-        critical_issues = db.session.query(func.count(Issue.id)).\
-            filter(Issue.severity == 'critical', Issue.status == 'open').scalar() or 0
-            
-        # 4. Avg Confidence
-        avg_conf = db.session.query(func.avg(Issue.confidence)).scalar() or 0
         
         return jsonify({
             'events': total_events,
@@ -177,14 +252,18 @@ def get_health_trend():
     start_dt = datetime.combine(start_day, datetime.min.time())
 
     try:
-        reviews = db.session.query(
-            Review.completed_at,
-            Review.overall_health_score,
-        ).filter(
-            Review.status == 'completed',
-            Review.completed_at != None,
-            Review.completed_at >= start_dt,
-        ).all()
+        user_db, user_repo_ids, user_repo_names = _get_current_user_and_repos()
+        reviews = []
+        if user_repo_ids:
+            reviews = db.session.query(
+                Review.completed_at,
+                Review.overall_health_score,
+            ).filter(
+                Review.status == 'completed',
+                Review.repository_id.in_(user_repo_ids),
+                Review.completed_at != None,
+                Review.completed_at >= start_dt,
+            ).all()
 
         # Bucket scores by day.
         by_day = defaultdict(list)
@@ -255,8 +334,9 @@ def get_events():
         page = max(1, int(request.args.get('page', 1)))
         per_page = min(100, max(1, int(request.args.get('limit') or request.args.get('per_page', 50))))
 
+        user_db, user_repo_ids, user_repo_names = _get_current_user_and_repos()
         webhook_events = _safe_redis_events()
-        filtered = list(webhook_events)
+        filtered = [e for e in webhook_events if (e.get('repo') or '').lower() in user_repo_names]
 
         if repo:
             filtered = [e for e in filtered if repo.lower() in (e.get('repo') or '').lower()]
@@ -293,9 +373,12 @@ def get_events():
 @login_required
 def get_event_detail(delivery_id):
     """Get details for a specific webhook event."""
+    user_db, user_repo_ids, user_repo_names = _get_current_user_and_repos()
     webhook_events = _safe_redis_events()
     for event in webhook_events:
         if event.get('delivery_id') == delivery_id:
+            if (event.get('repo') or '').lower() not in user_repo_names:
+                return jsonify({'error': 'Forbidden: Access denied'}), 403
             return jsonify(event)
     return jsonify({'error': 'Event not found'}), 404
 
@@ -311,8 +394,9 @@ def get_jobs():
         page = max(1, int(request.args.get('page', 1)))
         per_page = min(100, max(1, int(request.args.get('limit') or request.args.get('per_page', 50))))
 
+        user_db, user_repo_ids, user_repo_names = _get_current_user_and_repos()
         analysis_jobs = _safe_redis_jobs()
-        filtered = list(analysis_jobs)
+        filtered = [j for j in analysis_jobs if (j.get('repo') or '').lower() in user_repo_names]
 
         if repo:
             filtered = [j for j in filtered if repo.lower() in (j.get('repo') or '').lower()]
@@ -347,9 +431,12 @@ def get_jobs():
 @login_required
 def get_job_detail(job_id):
     """Get details for a specific analysis job."""
+    user_db, user_repo_ids, user_repo_names = _get_current_user_and_repos()
     analysis_jobs = _safe_redis_jobs()
     for job in analysis_jobs:
         if job.get('job_id') == job_id:
+            if (job.get('repo') or '').lower() not in user_repo_names:
+                return jsonify({'error': 'Forbidden: Access denied'}), 403
             return jsonify(job)
     return jsonify({'error': 'Job not found or no longer in cache'}), 404
 

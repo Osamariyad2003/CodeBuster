@@ -19,7 +19,7 @@ const RadialScoreRing = ({ score = 0, size = 80, strokeWidth = 8 }) => {
         particleCount: 120,
         spread: 70,
         origin: { y: 0.6 },
-        colors: ['#10B981', '#ffffff', '#6c5ce7'],
+        colors: ['#25E2A8', '#ffffff', '#FF570A'],
         disableForReducedMotion: true
       });
     }
@@ -31,19 +31,19 @@ const RadialScoreRing = ({ score = 0, size = 80, strokeWidth = 8 }) => {
   const strokeDashoffset = circumference - (animatedScore / 100) * circumference;
 
   // Determine color based on score
-  let strokeColor = 'var(--color-success)'; // Neon green
-  let glowColor = 'rgba(26, 127, 55, 0.6)';
+  let strokeColor = 'var(--color-success, #25E2A8)'; // CodeRabbit Mint
+  let glowColor = 'rgba(37, 226, 168, 0.6)';
 
   if (score < 40) {
-    strokeColor = 'var(--color-danger)'; // Red
-    glowColor = 'rgba(207, 34, 46, 0.6)';
+    strokeColor = 'var(--color-danger, #EF4444)'; // Red
+    glowColor = 'rgba(239, 68, 68, 0.6)';
   } else if (score < 80) {
-    strokeColor = 'var(--color-warning)'; // Amber
-    glowColor = 'rgba(154, 103, 0, 0.6)';
+    strokeColor = 'var(--color-warning, #F59E0B)'; // Amber
+    glowColor = 'rgba(245, 158, 11, 0.6)';
   } else if (score >= 90) {
-    // Ultra vibrant green for high scores
-    strokeColor = '#10B981'; // Tailwind Emerald 500
-    glowColor = 'rgba(16, 185, 129, 0.8)';
+    // Ultra vibrant CodeRabbit Mint for high scores
+    strokeColor = '#25E2A8';
+    glowColor = 'rgba(37, 226, 168, 0.8)';
   }
 
   return (

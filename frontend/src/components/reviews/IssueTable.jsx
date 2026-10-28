@@ -122,7 +122,7 @@ export default function IssueTable({
             ) : (
                 <>
                     <Table hover responsive size="sm">
-                        <thead className="table-light">
+                        <thead style={{ background: 'var(--surface-card-elevated)', color: 'var(--text-muted)' }}>
                             <tr>
                                 <th>Severity</th>
                                 <th>Title</th>
@@ -149,7 +149,7 @@ export default function IssueTable({
                                 >
                                     <td>{severityBadge(issue.severity)}</td>
                                     <td className="text-truncate" style={{ maxWidth: 280 }}>{issue.title}</td>
-                                    <td><Badge bg="light" text="dark">{issue.module || issue.category_key || '—'}</Badge></td>
+                                    <td><Badge bg="secondary" className="border border-secondary-subtle">{issue.module || issue.category_key || '—'}</Badge></td>
                                     <td className="text-truncate small" style={{ maxWidth: 180 }}>{issue.file || issue.file_path || '—'}</td>
                                     <td>{issue.confidence != null ? `${Math.round(issue.confidence * 100)}%` : '—'}</td>
                                     <td>

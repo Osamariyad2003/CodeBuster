@@ -106,6 +106,54 @@ def fetch_pr_files(repo_full_name, pr_number, access_token):
             
     return files
 
+def fetch_commit_files(repo_full_name, commit_sha, access_token):
+    """
+    Fetch changed files for a specific commit (e.g. push event).
+    Returns a list of dicts: [{'path': '...', 'content': '...'}, ...]
+    """
+    if not commit_sha:
+        return []
+    url = f"https://api.github.com/repos/{repo_full_name}/commits/{commit_sha}"
+    headers = {
+        'Authorization': f'token {access_token}',
+        'Accept': 'application/vnd.github.v3+json'
+    }
+    files = []
+    session = get_github_session()
+    try:
+        response = session.get(url, headers=headers, timeout=GITHUB_TIMEOUT)
+        if response.status_code != 200:
+            print(f"[ERR] Failed to fetch commit {commit_sha}: {response.status_code}")
+            return []
+        data = response.json()
+        commit_files = data.get('files', [])
+        for file_info in commit_files:
+            if file_info.get('status') == 'removed':
+                continue
+            file_path = file_info.get('filename', '')
+            if _should_skip_path(file_path):
+                continue
+            content_url = file_info.get('contents_url')
+            if content_url:
+                c_res = session.get(content_url, headers=headers, timeout=GITHUB_TIMEOUT)
+                if c_res.status_code == 200:
+                    c_data = c_res.json()
+                    content = ""
+                    if c_data.get('encoding') == 'base64':
+                        try:
+                            import base64
+                            content = base64.b64decode(c_data['content']).decode('utf-8')
+                        except Exception:
+                            content = ""
+                    files.append({
+                        'path': file_path,
+                        'content': content
+                    })
+    except Exception as e:
+        print(f"[ERR] Error fetching commit files: {e}")
+    return files
+
+
 def fetch_all_repo_files(repo_full_name, branch, access_token):
     """
     Fetch all files for a repository (recursive tree).

@@ -46,8 +46,10 @@ class Settings(BaseSettings):
                 return True
         return value
     
+    _backend_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    _env_file_path = os.path.join(_backend_dir, ".env")
     model_config = SettingsConfigDict(
-        env_file=".env", 
+        env_file=_env_file_path if os.path.exists(_env_file_path) else ".env", 
         extra="ignore",
         env_file_encoding='utf-8'
     )

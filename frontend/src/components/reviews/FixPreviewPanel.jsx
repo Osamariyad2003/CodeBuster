@@ -134,7 +134,7 @@ export default function FixPreviewPanel({ preview }) {
                         <Badge bg="secondary" style={{ textTransform: 'uppercase', fontSize: 10 }}>{preview.language}</Badge>
                     )}
                     {preview.strategy && (
-                        <Badge bg="light" text="dark" style={{ fontSize: 10 }}>{preview.strategy}</Badge>
+                        <Badge bg="secondary" className="border border-secondary-subtle" style={{ fontSize: 10 }}>{preview.strategy}</Badge>
                     )}
                     <StatPill value={stats.added}   color="#22c55e" sign="+" />
                     <StatPill value={stats.removed} color="#ef4444" sign="−" />
@@ -150,7 +150,7 @@ export default function FixPreviewPanel({ preview }) {
                             The problem
                         </span>
                         {preview.problem_severity && (
-                            <Badge bg="light" text="dark" style={{ fontSize: 10, textTransform: 'uppercase' }}>
+                            <Badge bg="secondary" className="border border-secondary-subtle" style={{ fontSize: 10, textTransform: 'uppercase' }}>
                                 {preview.problem_severity}
                             </Badge>
                         )}
@@ -259,7 +259,7 @@ export default function FixPreviewPanel({ preview }) {
             }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: '#6b7280', flex: 1, minWidth: 0 }}>
                     <FaCodeBranch size={10} style={{ flexShrink: 0 }} />
-                    <code style={{ color: '#818cf8', fontSize: 11, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <code style={{ color: '#FF7A30', fontSize: 11, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {preview.branch_preview}
                     </code>
                 </div>

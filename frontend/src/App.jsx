@@ -27,6 +27,7 @@ import ConstellationPage from './pages/ConstellationPage';
 import TimeTravelPage from './pages/TimeTravelPage';
 import FeedbackInsightsPage from './pages/FeedbackInsightsPage';
 import CommitsInboxPage from './pages/CommitsInboxPage';
+import ProfilePage from './pages/ProfilePage';
 import { ToastProvider } from './components/ToastProvider';
 import { MonitoringProvider } from './contexts/MonitoringContext';
 
@@ -78,6 +79,7 @@ function App() {
 
             {/* Authenticated Routes (Wrapped in AppShell) */}
             <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+            <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
 
             {/* Repositories & search */}
             <Route path="/repos" element={<ProtectedRoute><RepoListPage /></ProtectedRoute>} />

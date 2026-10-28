@@ -1,72 +1,91 @@
 :root {
-  /* === CodeBuster Design System: Forge Dark === */
-  --jb-purple: #6366F1;
-  --jb-purple-light: #818CF8;
-  --jb-purple-dark: #4F46E5;
+  /* === CodeBuster Design System: CodeRabbit Dark Forge === */
+  --jb-purple: #FF570A;
+  --jb-purple-light: #FF7A30;
+  --jb-purple-dark: #E04600;
 
-  /* Sidebar — always deep obsidian */
-  --sidebar-bg: #0C0C10;
-  --sidebar-bg-hover: rgba(99, 102, 241, 0.08);
-  --sidebar-bg-active: rgba(99, 102, 241, 0.13);
-  --sidebar-text: #71717A;
-  --sidebar-text-active: #F4F4F5;
-  --sidebar-text-muted: #52525B;
-  --sidebar-accent: #818CF8;
-  --sidebar-border: rgba(255, 255, 255, 0.055);
-  --sidebar-width: 232px;
-  --sidebar-width-collapsed: 56px;
+  /* CodeRabbit Brand Palette */
+  --cr-orange: #FF570A;
+  --cr-orange-glow: rgba(255, 87, 10, 0.4);
+  --cr-mint: #25E2A8;
+  --cr-cobalt: #687FF5;
+  --cr-purple: #9353D3;
+
+  /* Sidebar — deep space obsidian with subtle orange glow accents */
+  --sidebar-bg: #08090E;
+  --sidebar-bg-hover: rgba(255, 87, 10, 0.08);
+  --sidebar-bg-active: rgba(255, 87, 10, 0.16);
+  --sidebar-text: #94A3B8;
+  --sidebar-text-active: #F8FAFC;
+  --sidebar-text-muted: #64748B;
+  --sidebar-accent: #FF570A;
+  --sidebar-border: rgba(255, 255, 255, 0.06);
+  --sidebar-width: 240px;
+  --sidebar-width-collapsed: 60px;
 
   /* TopBar */
-  --topbar-bg: #0C0C10;
-  --topbar-height: 52px;
-  --topbar-border: rgba(255, 255, 255, 0.055);
-  --topbar-tab-active: #818CF8;
+  --topbar-bg: rgba(8, 9, 14, 0.88);
+  --topbar-height: 54px;
+  --topbar-border: rgba(255, 255, 255, 0.07);
+  --topbar-tab-active: #FF570A;
 
-  /* Content area — dark mode */
-  --content-bg: #0F1117;
-  --bg-main: #0F1117;
-  --surface-card: #161B27;
-  --surface-card-elevated: #1C2333;
-  --text-primary: #E6EDF3;
-  --text-secondary: #8B949E;
-  --text-muted: #6E7681;
-  --border-default: #30363D;
-  --border-subtle: #21262D;
+  /* Content area — deep space obsidian dark */
+  --content-bg: #07080C;
+  --bg-main: #07080C;
+  --surface-card: #0E1118;
+  --surface-card-elevated: #151923;
+  --surface-card-hover: #1C2230;
+  --surface-muted: rgba(255, 255, 255, 0.04);
+  --text-primary: #F8FAFC;
+  --text-secondary: #CBD5E1;
+  --text-muted: #94A3B8;
+  --border-default: rgba(255, 255, 255, 0.08);
+  --border-subtle: rgba(255, 255, 255, 0.04);
 
   /* Primary / brand */
-  --primary-brand: #6366F1;
-  --secondary-accent: #0D9488;
+  --primary-brand: #FF570A;
+  --primary-brand-hover: #FF7A30;
+  --secondary-accent: #25E2A8;
 
   /* Semantic colors */
-  --color-success: #16A34A;
-  --color-warning: #D97706;
-  --color-danger: #DC2626;
-  --color-info: #0EA5E9;
-  --color-ai-insight: #8B5CF6;
+  --color-success: #25E2A8;
+  --color-warning: #F59E0B;
+  --color-danger: #EF4444;
+  --color-info: #687FF5;
+  --color-ai-insight: #A855F7;
 
-  /* Typography — Syne (display) + DM Sans (body) */
-  --font-main: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  --font-display: 'Syne', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
-  --font-size-base: 13.5px;
-  --font-size-sm: 12px;
-  --font-size-xs: 11px;
+  /* Typography — Inter (ultra-clean, highly legible UI) + JetBrains Mono */
+  --font-main: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+  --font-display: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', 'SF Mono', Consolas, monospace;
+  --font-size-base: 14.5px;
+  --font-size-sm: 13px;
+  --font-size-xs: 12px;
 
   /* Shape & motion */
-  --border-radius: 7px;
-  --border-radius-lg: 10px;
-  --transition: all 0.18s ease;
+  --border-radius-sm: 6px;
+  --border-radius: 8px;
+  --border-radius-lg: 12px;
+  --border-radius-xl: 16px;
+  --transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   --transition-fast: 0.12s ease;
-  --transition-base: 0.18s ease;
+  --transition-base: 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 
   /* Elevation shadows */
-  --shadow-sm: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
-  --shadow-md: 0 4px 12px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04);
-  --shadow-lg: 0 10px 28px rgba(0,0,0,0.10), 0 4px 8px rgba(0,0,0,0.05);
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.2), 0 1px 2px rgba(0,0,0,0.12);
+  --shadow-md: 0 4px 16px -2px rgba(0,0,0,0.35), 0 2px 6px -1px rgba(0,0,0,0.2);
+  --shadow-lg: 0 12px 36px -4px rgba(0,0,0,0.45), 0 4px 12px -2px rgba(0,0,0,0.25);
+  --shadow-glow: 0 0 28px -2px rgba(255, 87, 10, 0.3);
 
-  /* Legacy compat */
-  --glass-bg: #161B27;
+  /* Legacy & card compat */
+  --glass-bg: rgba(14, 17, 24, 0.88);
   --glass-border: var(--border-default);
+  --card-box-shadow: 0 2px 10px rgba(0, 0, 0, 0.25);
+  --card-hover-box-shadow: 0 8px 28px rgba(0, 0, 0, 0.45);
+  --background-color: var(--content-bg);
+  --background-secondary: var(--surface-card-elevated);
+  --card-background-color: var(--surface-card);
+  --card-border-color: var(--border-default);
 
   line-height: 1.5;
   font-weight: 400;
@@ -78,57 +97,60 @@ html.light {
   color-scheme: light;
 
   /* Content area */
-  --content-bg: #F4F6F8;
-  --bg-main: #F4F6F8;
+  --content-bg: #F8FAFC;
+  --bg-main: #F8FAFC;
   --surface-card: #FFFFFF;
-  --surface-card-elevated: #F0F2F5;
+  --surface-card-elevated: #F1F5F9;
+  --surface-card-hover: #F8FAFC;
+  --surface-muted: #F1F5F9;
 
   /* Text */
-  --text-primary: #111827;
-  --text-secondary: #4B5563;
-  --text-muted: #9CA3AF;
+  --text-primary: #0F172A;
+  --text-secondary: #334155;
+  --text-muted: #64748B;
 
   /* Borders */
-  --border-default: #E5E7EB;
-  --border-subtle: #F3F4F6;
+  --border-default: #E2E8F0;
+  --border-subtle: #F1F5F9;
 
   /* Sidebar */
-  --sidebar-bg: #1E1F2E;
-  --sidebar-bg-hover: rgba(99, 102, 241, 0.1);
-  --sidebar-bg-active: rgba(99, 102, 241, 0.16);
-  --sidebar-text: #A1A1AA;
+  --sidebar-bg: #0F172A;
+  --sidebar-bg-hover: rgba(255, 87, 10, 0.08);
+  --sidebar-bg-active: rgba(255, 87, 10, 0.16);
+  --sidebar-text: #94A3B8;
   --sidebar-text-active: #FFFFFF;
-  --sidebar-text-muted: #6B7280;
-  --sidebar-accent: #818CF8;
-  --sidebar-border: rgba(255, 255, 255, 0.07);
+  --sidebar-text-muted: #64748B;
+  --sidebar-accent: #FF570A;
+  --sidebar-border: rgba(255, 255, 255, 0.08);
 
   /* TopBar */
-  --topbar-bg: #FFFFFF;
-  --topbar-border: #E5E7EB;
-  --topbar-tab-active: #6366F1;
+  --topbar-bg: rgba(255, 255, 255, 0.9);
+  --topbar-border: #E2E8F0;
+  --topbar-tab-active: #FF570A;
 
   /* Shadows */
-  --shadow-sm: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
-  --shadow-md: 0 4px 12px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04);
-  --shadow-lg: 0 10px 28px rgba(0,0,0,0.10), 0 4px 8px rgba(0,0,0,0.05);
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.05), 0 1px 2px rgba(0,0,0,0.03);
+  --shadow-md: 0 4px 16px -2px rgba(0,0,0,0.08), 0 2px 6px -1px rgba(0,0,0,0.04);
+  --shadow-lg: 0 12px 32px -4px rgba(0,0,0,0.12), 0 4px 12px -2px rgba(0,0,0,0.05);
+  --shadow-glow: 0 0 24px -2px rgba(255, 87, 10, 0.25);
 
   /* Glass */
-  --glass-bg: #FFFFFF;
-  --glass-border: #E5E7EB;
+  --glass-bg: rgba(255, 255, 255, 0.9);
+  --glass-border: #E2E8F0;
 
   /* Legacy compat */
-  --background-color: #F4F6F8;
-  --background-secondary: #E9EBF0;
+  --background-color: #F8FAFC;
+  --background-secondary: #F1F5F9;
   --card-background-color: #FFFFFF;
-  --card-border-color: #E5E7EB;
-  --card-box-shadow: 0 1px 3px rgba(0,0,0,0.06);
-  --card-hover-box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-  --light-gray: #F4F6F8;
+  --card-border-color: #E2E8F0;
+  --card-box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+  --card-hover-box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  --light-gray: #F8FAFC;
   --white: #FFFFFF;
-  --jb-purple: #6366F1;
-  --jb-purple-light: #818CF8;
-  --jb-purple-dark: #4F46E5;
-  --primary-blue: #6366F1;
+  --jb-purple: #FF570A;
+  --jb-purple-light: #FF7A30;
+  --jb-purple-dark: #E04600;
+  --primary-blue: #FF570A;
 }
 
 html.light body {
@@ -191,9 +213,36 @@ body {
   background-color: var(--bg-main);
   color: var(--text-primary);
   font-family: var(--font-main);
-  font-feature-settings: 'ss01', 'cv11';
+  font-size: var(--font-size-base);
+  line-height: 1.6;
+  letter-spacing: -0.011em;
+  font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.022em;
+  line-height: 1.3;
+}
+
+p, li, td, th {
+  line-height: 1.6;
+}
+
+.small, small {
+  font-size: var(--font-size-sm);
+  line-height: 1.5;
+}
+
+code, pre, kbd, samp {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+  letter-spacing: -0.01em;
 }
 
 /* Base button interaction */
@@ -270,7 +319,7 @@ button {
   background-color: var(--surface-card) !important;
   border-color: var(--jb-purple) !important;
   color: var(--text-primary) !important;
-  box-shadow: 0 0 0 3px rgba(99,102,241,0.2) !important;
+  box-shadow: 0 0 0 3px rgba(255, 87, 10, 0.25) !important;
 }
 .form-control::placeholder { color: var(--text-muted) !important; }
 
@@ -283,8 +332,8 @@ button {
   color: var(--text-primary) !important;
 }
 .dropdown-item:hover {
-  background-color: rgba(99,102,241,0.1) !important;
-  color: #818CF8 !important;
+  background-color: rgba(255, 87, 10, 0.12) !important;
+  color: #FF570A !important;
 }
 
 .nav-tabs { border-color: var(--border-default) !important; }
@@ -305,3 +354,115 @@ button {
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--border-default); border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: #444D56; }
+
+/* ==================== MODERN CODEBUSTER DESIGN UTILITIES ==================== */
+.cb-card {
+  background: var(--surface-card);
+  border: 1px solid var(--border-default);
+  border-radius: var(--border-radius-xl, 16px);
+  box-shadow: var(--shadow-sm);
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.cb-card:hover {
+  border-color: rgba(255, 87, 10, 0.35);
+  box-shadow: var(--shadow-md), 0 0 0 1px rgba(255, 87, 10, 0.15);
+  transform: translateY(-2px);
+}
+
+.cb-card-elevated {
+  background: var(--surface-card-elevated);
+  border: 1px solid var(--border-default);
+  border-radius: var(--border-radius-xl, 16px);
+  box-shadow: var(--shadow-md);
+}
+
+.cb-glass-card {
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--border-default);
+  border-radius: var(--border-radius-xl, 16px);
+  box-shadow: var(--shadow-md);
+}
+
+.cb-gradient-text {
+  background: linear-gradient(135deg, #FF7A30 0%, #FF570A 50%, #25E2A8 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.cb-pulse-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+  position: relative;
+}
+
+.cb-pulse-dot::after {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border-radius: 50%;
+  background: inherit;
+  opacity: 0.4;
+  animation: cb-ping 1.8s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+@keyframes cb-ping {
+  75%, 100% {
+    transform: scale(2.2);
+    opacity: 0;
+  }
+}
+
+.cb-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  transition: var(--transition-fast);
+}
+
+.cb-badge-primary {
+  background: rgba(255, 87, 10, 0.12);
+  color: #FF570A;
+  border: 1px solid rgba(255, 87, 10, 0.3);
+}
+
+.cb-badge-success {
+  background: rgba(37, 226, 168, 0.12);
+  color: #25E2A8;
+  border: 1px solid rgba(37, 226, 168, 0.3);
+}
+
+.cb-badge-warning {
+  background: rgba(245, 158, 11, 0.12);
+  color: #F59E0B;
+  border: 1px solid rgba(245, 158, 11, 0.25);
+}
+
+.cb-badge-danger {
+  background: rgba(239, 68, 68, 0.12);
+  color: #EF4444;
+  border: 1px solid rgba(239, 68, 68, 0.25);
+}
+
+.cb-badge-info {
+  background: rgba(104, 127, 245, 0.12);
+  color: #687FF5;
+  border: 1px solid rgba(104, 127, 245, 0.3);
+}
+
+.cb-badge-purple {
+  background: rgba(168, 85, 247, 0.12);
+  color: #C084FC;
+  border: 1px solid rgba(168, 85, 247, 0.25);
+}

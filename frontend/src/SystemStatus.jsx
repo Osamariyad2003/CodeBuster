@@ -23,7 +23,7 @@ const SystemStatus = () => {
 
                 <Row className="g-3 mb-4">
                     <Col md={6}>
-                        <Card as={Link} to="/events" className="shadow-sm border-0 h-100 text-decoration-none text-reset">
+                        <Card as={Link} to="/events" className="shadow-sm h-100 text-decoration-none text-reset" style={{ background: 'var(--surface-card)', border: '1px solid var(--border-default)', borderRadius: 14 }}>
                             <Card.Body className="d-flex align-items-center">
                                 <div style={{
                                     width: 44, height: 44, borderRadius: 10,
@@ -42,7 +42,7 @@ const SystemStatus = () => {
                         </Card>
                     </Col>
                     <Col md={6}>
-                        <Card as={Link} to="/jobs" className="shadow-sm border-0 h-100 text-decoration-none text-reset">
+                        <Card as={Link} to="/jobs" className="shadow-sm h-100 text-decoration-none text-reset" style={{ background: 'var(--surface-card)', border: '1px solid var(--border-default)', borderRadius: 14 }}>
                             <Card.Body className="d-flex align-items-center">
                                 <div style={{
                                     width: 44, height: 44, borderRadius: 10,
@@ -69,7 +69,7 @@ const SystemStatus = () => {
 
                 <Row className="g-4">
                     <Col md={6}>
-                        <Card className="shadow-sm border-0 h-100">
+                        <Card className="shadow-sm h-100" style={{ background: 'var(--surface-card)', border: '1px solid var(--border-default)', borderRadius: 14 }}>
                             <Card.Body>
                                 <h5 className="card-title text-muted mb-3"><FaDatabase className="me-2" />Redis Status</h5>
                                 <div className="d-flex align-items-center gap-2">
@@ -80,7 +80,7 @@ const SystemStatus = () => {
                         </Card>
                     </Col>
                     <Col md={6}>
-                        <Card className="shadow-sm border-0 h-100">
+                        <Card className="shadow-sm h-100" style={{ background: 'var(--surface-card)', border: '1px solid var(--border-default)', borderRadius: 14 }}>
                             <Card.Body>
                                 <h5 className="card-title text-muted mb-3"><FaServer className="me-2" />Active Workers</h5>
                                 <h2 className="fw-bold">{metrics.active_workers}</h2>
@@ -88,7 +88,7 @@ const SystemStatus = () => {
                         </Card>
                     </Col>
                     <Col md={12}>
-                        <Card className="shadow-sm border-0">
+                        <Card className="shadow-sm" style={{ background: 'var(--surface-card)', border: '1px solid var(--border-default)', borderRadius: 14 }}>
                             <Card.Body>
                                 <h5 className="card-title text-muted mb-3"><FaMemory className="me-2" />Queue Health</h5>
                                 <ProgressBar now={10} label={`${10}%`} variant="success" className="mb-2" style={{ height: 20 }} />

@@ -43,20 +43,24 @@ export const AuthProvider = ({ children }) => {
     const initAuth = async () => {
       const params = new URLSearchParams(window.location.search);
       const code = params.get('code');
+      const state = params.get('state');
       const authSuccess = params.get('auth_success');
       const authError = params.get('auth_error');
 
       // ✅ Handle GitHub OAuth callback (exchange the code exactly once)
       if (code && !callbackProcessed.current) {
-        // Set the latch AND strip ?code (and state) from the URL synchronously,
-        // before the first `await`. This closes the StrictMode double-invoke
-        // window and means a refresh mid-exchange won't find a `code` param
-        // to re-trigger on.
         callbackProcessed.current = true;
         window.history.replaceState({}, document.title, window.location.pathname);
 
         try {
-          await apiClient.get(`/auth/callback?code=${code}`);
+          const callbackUrl = state
+            ? `/auth/callback?code=${encodeURIComponent(code)}&state=${encodeURIComponent(state)}`
+            : `/auth/callback?code=${encodeURIComponent(code)}`;
+
+          const response = await apiClient.get(callbackUrl);
+          if (response?.user) {
+            setUser(response.user);
+          }
           await checkAuth();
           window.history.replaceState({}, document.title, '/dashboard');
         } catch (err) {
@@ -93,7 +97,7 @@ export const AuthProvider = ({ children }) => {
   const checkAuth = async () => {
     try {
       const response = await apiClient.get('/auth/user');
-      if (response.authenticated) {
+      if (response && response.authenticated && response.user) {
         setUser(response.user);
         await fetchRepos();
         await fetchConnectedRepos();
@@ -111,11 +115,33 @@ export const AuthProvider = ({ children }) => {
   const login = async () => {
     try {
       const response = await apiClient.get('/auth/github');
-      if (response.auth_url) {
+      if (response && response.auth_url) {
         window.location.href = response.auth_url;
+        return;
       }
+      throw new Error(response?.error || 'Failed to retrieve GitHub authentication URL');
     } catch (err) {
       console.error('Login redirection failed:', err);
+      throw err;
+    }
+  };
+
+  const demoLogin = async () => {
+    setLoading(true);
+    try {
+      const response = await apiClient.post('/auth/demo');
+      if (response && response.user) {
+        setUser(response.user);
+        await fetchRepos();
+        await fetchConnectedRepos();
+        return response.user;
+      }
+      throw new Error('Failed to establish demo session');
+    } catch (err) {
+      console.error('Demo login failed:', err);
+      throw err;
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -165,6 +191,7 @@ export const AuthProvider = ({ children }) => {
     user,
     loading,
     login,
+    demoLogin,
     logout,
     connectedRepos,
     setConnectedRepos,
@@ -190,4 +217,3 @@ export const useAuth = () => {
 };
 
 export default AuthContext;
-

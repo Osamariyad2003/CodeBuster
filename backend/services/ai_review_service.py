@@ -6,9 +6,19 @@ import time
 import random
 import hashlib
 import threading
+import logging
+logger = logging.getLogger(__name__)
 import requests
 from datetime import datetime, timezone
 from typing import List, Dict, Any, Optional
+
+try:
+    from dotenv import load_dotenv
+    _backend_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    _env_path = os.path.join(_backend_dir, '.env')
+    load_dotenv(_env_path if os.path.exists(_env_path) else None)
+except Exception:
+    pass
 
 # Redis is the same broker Celery is already using; reusing it for the AI
 # enhancement cache costs us nothing extra.
@@ -185,7 +195,7 @@ class AIReviewService:
         self.groq_api_url = os.getenv(
             "GROQ_API_URL", "https://api.groq.com/openai/v1/chat/completions"
         ).strip()
-        self.groq_model = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile").strip()
+        self.groq_model = os.getenv("GROQ_MODEL", "openai/gpt-oss-120b").strip() or "openai/gpt-oss-120b"
         # OpenAI
         self.openai_api_key = os.getenv("OPEN_AI_KEY") or os.getenv("OPENAI_API_KEY")
         self.openai_api_url = "https://api.openai.com/v1/chat/completions"
@@ -200,6 +210,7 @@ class AIReviewService:
             "groq": bool(self.groq_api_key),
             "openai": bool(self.openai_api_key),
         }
+        self.available = available
 
         # Optional explicit override — pick the named provider if its key is
         # actually configured. Otherwise fall through to auto-detection so a
@@ -210,7 +221,7 @@ class AIReviewService:
         else:
             # Auto-detect: walk the priority order and pick the first
             # provider with a credential present.
-            priority = ("openai", "vertex", "gemini", "anthropic", "openrouter", "groq")
+            priority = ("gemini", "vertex", "anthropic", "openai", "openrouter", "groq")
             self.provider = next((p for p in priority if available[p]), None)
         
     def enhance_issue(self, issue: Dict, file_content: str, language: str) -> Dict:
@@ -230,7 +241,17 @@ class AIReviewService:
         # it can't get from the file alone (e.g. which CVE to cite, or where
         # the other copy of a duplicated block lives).
         evidence = issue.get('evidence') or []
+        if isinstance(evidence, dict):
+            evidence = [f"{k}: {v}" for k, v in evidence.items()]
+        elif not isinstance(evidence, (list, tuple)):
+            evidence = [str(evidence)]
+
         references = issue.get('references') or []
+        if isinstance(references, dict):
+            references = [f"{k}: {v}" for k, v in references.items()]
+        elif not isinstance(references, (list, tuple)):
+            references = [str(references)]
+
         tool = issue.get('tool') or 'unknown'
         evidence_block = '\n'.join(f"  - {e}" for e in evidence[:8]) or '  (none)'
         references_block = '\n'.join(f"  - {r}" for r in references[:5]) or '  (none)'
@@ -360,7 +381,7 @@ Important:
             
             return enhanced
         except Exception as e:
-            print(f"[WARN]️ Error enhancing issue: {e}")
+            print(f"[WARN] Error enhancing issue: {e}")
             return issue
 
     def generate_fix_patch(self, issue: Dict, file_content: str, language: str) -> Dict:
@@ -427,7 +448,7 @@ Return ONLY valid JSON in this exact shape:
                 'summary': parsed.get('summary') or '',
             }
         except Exception as e:
-            print(f"[WARN]️ Error generating AI fix patch: {e}")
+            print(f"[WARN] Error generating AI fix patch: {e}")
             return {}
 
     @staticmethod
@@ -539,7 +560,7 @@ Return ONLY valid JSON in this exact shape:
                     delay = (0.6 * (2 ** (attempt - 1))) + random.uniform(0, 0.5)
                 time.sleep(delay)
         if last_err:
-            print(f"[WARN]️ enhance_issue gave up after {max_attempts} attempts: {last_err}")
+            print(f"[WARN] enhance_issue gave up after {max_attempts} attempts: {last_err}")
         return issue
 
     def generate_executive_summary(
@@ -620,7 +641,7 @@ Constraints:
             content = response['choices'][0]['message']['content']
             return json.loads(_strip_json_fences(content))
         except Exception as e:
-            print(f"[WARN]️ generate_executive_summary failed: {e}")
+            print(f"[WARN] generate_executive_summary failed: {e}")
             return None
 
     def summarize_fix_sprint(
@@ -671,7 +692,7 @@ Return ONLY the markdown body text — no JSON, no code fences around the whole 
             content = response['choices'][0]['message']['content']
             return content.strip()
         except Exception as e:
-            print(f"[WARN]️ summarize_fix_sprint failed: {e}")
+            print(f"[WARN] summarize_fix_sprint failed: {e}")
             return None
 
     def generate_review(self, findings: List[Dict[str, Any]], repository_context: Dict = None, diff_context: str = "") -> Dict[str, Any]:
@@ -1025,43 +1046,56 @@ Finding {i}:
         response.raise_for_status()
         return response.json()
 
+    def _call_provider_by_name(self, provider_name: str, prompt: str) -> Dict:
+        if provider_name == "vertex":
+            return self._call_vertex(prompt)
+        elif provider_name == "gemini":
+            return self._call_gemini(prompt)
+        elif provider_name == "anthropic":
+            return self._call_anthropic(prompt)
+        elif provider_name == "openrouter":
+            return self._call_openrouter(prompt)
+        elif provider_name == "groq":
+            return self._call_groq(prompt)
+        else:
+            return self._call_openai(prompt)
+
     def _dispatch(self, prompt: str) -> Dict:
         """
         Single dispatch point that routes a prompt to whichever provider was
-        auto-selected (or forced via AI_PROVIDER). Keeps enhance_issue /
-        generate_executive_summary / generate_review from drifting when a
-        new provider is added — only this method needs to know about it.
-
-        Also records the outcome (success/failure + reason) into the
-        module-level health tracker so /github/ai/health can report it.
+        auto-selected (or forced via AI_PROVIDER), with automatic failover to
+        secondary configured providers if the primary hits rate limits (429)
+        or provider errors.
         """
-        model = {
-            "vertex": self.vertex_model,
-            "gemini": self.gemini_model,
-            "anthropic": self.anthropic_model,
-            "openrouter": self.openrouter_model,
-            "groq": self.groq_model,
-            "openai": self.openai_model,
-        }.get(self.provider)
-        try:
-            if self.provider == "vertex":
-                result = self._call_vertex(prompt)
-            elif self.provider == "gemini":
-                result = self._call_gemini(prompt)
-            elif self.provider == "anthropic":
-                result = self._call_anthropic(prompt)
-            elif self.provider == "openrouter":
-                result = self._call_openrouter(prompt)
-            elif self.provider == "groq":
-                result = self._call_groq(prompt)
-            else:
-                # Default fallback — GPT-5.6 via OpenAI, works as long as a key is present.
-                result = self._call_openai(prompt)
-            _record_ai_success(self.provider, model)
-            return result
-        except Exception as e:
-            _record_ai_failure(self.provider, model, e)
-            raise
+        candidates = []
+        if getattr(self, 'provider', None):
+            candidates.append(self.provider)
+        for p in ("gemini", "groq", "openai", "vertex", "anthropic", "openrouter"):
+            if p not in candidates and getattr(self, "available", {}).get(p):
+                candidates.append(p)
+
+        last_err = None
+        for prov in candidates:
+            model = {
+                "vertex": self.vertex_model,
+                "gemini": self.gemini_model,
+                "anthropic": self.anthropic_model,
+                "openrouter": self.openrouter_model,
+                "groq": self.groq_model,
+                "openai": self.openai_model,
+            }.get(prov)
+            try:
+                result = self._call_provider_by_name(prov, prompt)
+                _record_ai_success(prov, model)
+                return result
+            except Exception as e:
+                _record_ai_failure(prov, model, e)
+                last_err = e
+                logger.warning("AI provider '%s' failed (%s). Checking next provider in fallback chain...", prov, e)
+
+        if last_err:
+            raise last_err
+        raise RuntimeError("No AI provider available or configured.")
 
     def _call_groq(self, prompt: str) -> Dict:
         """

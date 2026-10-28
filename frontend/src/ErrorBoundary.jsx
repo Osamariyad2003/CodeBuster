@@ -46,7 +46,7 @@ export class ErrorBoundary extends React.Component {
               className="btn btn-primary px-4 py-2" 
               onClick={() => window.location.reload()}
               style={{ 
-                background: 'var(--primary-gradient, #6366f1)', 
+                background: 'var(--primary-gradient, #FF570A)', 
                 border: 'none',
                 borderRadius: 12,
                 fontWeight: 600

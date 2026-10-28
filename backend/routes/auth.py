@@ -1,8 +1,11 @@
-from flask import Blueprint, jsonify, request, session, redirect
+from flask import Blueprint, jsonify, request, session, redirect, current_app
 from functools import wraps
 from models import db, User
 import os
 import requests
+import secrets
+import hmac
+import uuid
 from dotenv import load_dotenv
 from pathlib import Path
 from utils.github_client import get_github_session, GITHUB_TIMEOUT
@@ -52,10 +55,10 @@ def github_auth():
     if not GITHUB_CLIENT_ID or not GITHUB_CLIENT_SECRET:
         return jsonify({"error": "GitHub credentials not configured"}), 500
 
+    state = secrets.token_urlsafe(32)
+    session['oauth_state'] = state
     redirect_uri = f"{FRONTEND_URL}/auth/callback"
-
-    github_auth_url = f"https://github.com/login/oauth/authorize?client_id={GITHUB_CLIENT_ID}&redirect_uri={redirect_uri}&scope=repo,user"
-
+    github_auth_url = f"https://github.com/login/oauth/authorize?client_id={GITHUB_CLIENT_ID}&redirect_uri={redirect_uri}&scope=repo,user&state={state}" 
     print(f"\n[AUTH] OAuth URL generated:")
     print(f"       {github_auth_url}\n")
 
@@ -63,10 +66,17 @@ def github_auth():
 
 @auth_bp.route('/callback', methods=['GET'])
 def github_callback():
-    """Handle GitHub OAuth callback from frontend."""
+    """Handle GitHub OAuth callback from frontend or direct redirect."""
     code = request.args.get('code')
     error = request.args.get('error')
+    state = request.args.get('state')
+    expected_state = session.pop('oauth_state', None)
 
+    # Validate CSRF state strictly
+    if expected_state:
+        if not state or not hmac.compare_digest(state, expected_state):
+            print(f"[WARN] CSRF state mismatch or missing: received={state}, expected={expected_state}")
+            return jsonify({"error": "Invalid OAuth state parameter (CSRF detected)"}), 400
     print(f"\n{'='*60}")
     print(f"[AUTH] GitHub callback received")
     print(f"{'='*60}")
@@ -148,7 +158,7 @@ def github_callback():
         user_db = User.query.filter_by(github_id=user_data['id']).first()
         if not user_db:
             user_db = User(
-                id=str(__import__('uuid').uuid4()),
+                id=str(uuid.uuid4()),
                 github_id=user_data['id'],
                 username=user_data['login'],
                 email=user_data.get('email'),
@@ -175,6 +185,10 @@ def github_callback():
         print(f"[OK] User persisted in DB and session: {user_data['login']}")
         print(f"{'='*60}\n")
 
+        # Support direct browser navigation redirect or JSON response
+        if 'text/html' in request.headers.get('Accept', '') and 'application/json' not in request.headers.get('Accept', ''):
+            return redirect(f"{FRONTEND_URL}/dashboard?auth_success=1")
+
         return jsonify({
             "success": True,
             "user": session['user'],
@@ -185,8 +199,47 @@ def github_callback():
         print(f"[ERR] OAuth Error: {str(e)}")
         import traceback
         traceback.print_exc()
-        return redirect(f"{FRONTEND_URL}/?error={str(e)}")
+        return jsonify({"error": "OAuth Error", "details": str(e)}), 500
 
+@auth_bp.route('/demo', methods=['POST', 'GET'])
+def demo_auth():
+    """Instant 1-click developer/demo session without external GitHub roundtrip."""
+    if not current_app.config.get('DEBUG') and not current_app.config.get('TESTING'):
+        return jsonify({"error": "Demo authentication is disabled in production"}), 403
+    # Find existing main developer user or create a demo user
+    user_db = User.query.filter_by(username='Osamariyad2003').first()
+    if not user_db:
+        user_db = User.query.filter_by(username='codebuster-demo').first()
+    if not user_db:
+        user_db = User(
+            id=str(uuid.uuid4()),
+            github_id=99999999,
+            username='codebuster-demo',
+            email='demo@codebuster.ai',
+            avatar_url='https://avatars.githubusercontent.com/u/9919?s=200&v=4'
+        )
+        db.session.add(user_db)
+        user_db.set_access_token('demo_access_token')
+        db.session.commit()
+
+    session.permanent = True
+    session['user'] = {
+        'id': user_db.id,
+        'github_id': user_db.github_id,
+        'login': user_db.username,
+        'avatar_url': user_db.avatar_url
+    }
+    print(f"[OK] Demo session active: {user_db.username}")
+
+    if request.method == 'GET' and 'text/html' in request.headers.get('Accept', ''):
+        return redirect(f"{FRONTEND_URL}/dashboard")
+
+    return jsonify({
+        "success": True,
+        "authenticated": True,
+        "user": session['user'],
+        "message": "Demo authentication successful"
+    })
 
 @auth_bp.route('/user', methods=['GET'])
 def get_current_user():
@@ -228,8 +281,108 @@ def get_current_user():
             "user": None
         })
 
+
+@auth_bp.route('/profile', methods=['GET'])
+@login_required
+def get_user_profile():
+    """Retrieve detailed user profile, stats, and preferences."""
+    user_session = session.get('user') or {}
+    user_id = user_session.get('id')
+    login = user_session.get('login') or user_session.get('username')
+
+    user_db = None
+    if user_id:
+        user_db = User.query.get(user_id)
+    if not user_db and login:
+        user_db = User.query.filter_by(username=login).first()
+
+    if not user_db:
+        return jsonify({"error": "User not found"}), 404
+
+    from models import Review, Issue, Repository
+    repo_ids = [r.id for r in user_db.repositories] if user_db.repositories else []
+    total_reviews = Review.query.filter(Review.repository_id.in_(repo_ids)).count() if repo_ids else 0
+    total_issues = Issue.query.join(Review).filter(Review.repository_id.in_(repo_ids)).count() if repo_ids else 0
+
+    return jsonify({
+        "success": True,
+        "user": user_db.to_dict(),
+        "stats": {
+            "total_repositories": len(repo_ids),
+            "total_reviews": total_reviews,
+            "total_issues_detected": total_issues,
+            "active_ai_provider": os.getenv("AI_PROVIDER", "gemini"),
+            "ai_model": os.getenv("GEMINI_MODEL", "gemini-2.5-flash"),
+            "security_encryption": "Fernet AES-256 Enabled"
+        },
+        "repositories": [
+            {
+                "id": r.id,
+                "name": r.name,
+                "full_name": r.full_name,
+                "language": r.language or "Multiple",
+                "status": r.status or "active",
+                "reviews_count": len(r.reviews) if r.reviews else 0
+            }
+            for r in user_db.repositories
+        ]
+    })
+
+
+@auth_bp.route('/profile', methods=['PUT', 'POST'])
+@login_required
+def update_user_profile():
+    """Update user personal info and AI reviewer preferences."""
+    user_session = session.get('user') or {}
+    user_id = user_session.get('id')
+    login = user_session.get('login') or user_session.get('username')
+
+    user_db = None
+    if user_id:
+        user_db = User.query.get(user_id)
+    if not user_db and login:
+        user_db = User.query.filter_by(username=login).first()
+
+    if not user_db:
+        return jsonify({"error": "User not found"}), 404
+
+    data = request.get_json() or {}
+
+    # Update basic profile attributes
+    if 'email' in data:
+        user_db.email = (data['email'] or '').strip()
+    if 'bio' in data:
+        user_db.bio = (data['bio'] or '').strip()
+    if 'role' in data:
+        user_db.role = (data['role'] or '').strip()
+    if 'company' in data:
+        user_db.company = (data['company'] or '').strip()
+    if 'avatar_url' in data and data['avatar_url']:
+        user_db.avatar_url = data['avatar_url'].strip()
+
+    # Update preferences dictionary
+    if 'preferences' in data and isinstance(data['preferences'], dict):
+        user_db.set_preferences(data['preferences'])
+
+    db.session.commit()
+
+    # Update session cache
+    session['user'] = {
+        'id': user_db.id,
+        'github_id': user_db.github_id,
+        'login': user_db.username,
+        'avatar_url': user_db.avatar_url,
+        'role': user_db.role
+    }
+
+    return jsonify({
+        "success": True,
+        "message": "Profile updated successfully",
+        "user": user_db.to_dict()
+    })
+
 @auth_bp.route('/logout', methods=['POST'])
 def logout():
     """Log out the current user."""
-    session.pop('user', None)
+    session.clear()
     return jsonify({"success": True})

@@ -247,7 +247,7 @@ export default function RepositoryDashboard() {
 
     if (loading) return (
         <div className="d-flex justify-content-center align-items-center" style={{ minHeight: '60vh' }}>
-            <Spinner animation="border" style={{ color: '#6366F1' }} />
+            <Spinner animation="border" style={{ color: '#FF570A' }} />
         </div>
     );
 
@@ -370,7 +370,7 @@ export default function RepositoryDashboard() {
                                         onClick={() => handleManualScan()}
                                         className="btn d-flex align-items-center gap-2"
                                         style={{
-                                            background: 'linear-gradient(135deg, #6366F1, #8B5CF6)',
+                                            background: 'linear-gradient(135deg, #FF570A, #FF7A30)',
                                             color: '#fff', border: 'none', borderRadius: 9,
                                             fontWeight: 700, fontSize: '0.86rem',
                                             padding: '9px 20px', whiteSpace: 'nowrap',
@@ -435,14 +435,14 @@ export default function RepositoryDashboard() {
                             display: 'flex', alignItems: 'center', justifyContent: 'center',
                             margin: '0 auto 16px',
                         }}>
-                            <FaBolt size={26} style={{ color: '#6366F1' }} />
+                            <FaBolt size={26} style={{ color: '#FF570A' }} />
                         </div>
                         <h5 style={{ fontWeight: 800, color: 'var(--text-primary)', marginBottom: 8 }}>No scan results yet</h5>
                         <p style={{ color: 'var(--text-secondary)', maxWidth: 360, margin: '0 auto 24px', fontSize: '0.88rem' }}>
                             Run a scan to get your health score, find issues, and see AI-powered fix suggestions.
                         </p>
                         <button className="btn d-inline-flex align-items-center gap-2"
-                            style={{ background: 'linear-gradient(135deg, #6366F1, #8B5CF6)', color: '#fff', border: 'none', borderRadius: 9, fontWeight: 700, padding: '10px 24px', boxShadow: '0 4px 14px rgba(99,102,241,0.35)' }}
+                            style={{ background: 'linear-gradient(135deg, #FF570A, #FF7A30)', color: '#fff', border: 'none', borderRadius: 9, fontWeight: 700, padding: '10px 24px', boxShadow: '0 4px 14px rgba(255,87,10,0.35)' }}
                             onClick={() => handleManualScan()}>
                             <FaPlay size={12} /> Run First Scan
                         </button>
@@ -451,7 +451,7 @@ export default function RepositoryDashboard() {
 
                 {!review && (scanJobId || scanning || inlineScanning) && (
                     <div className="dash-scan-pending">
-                        <Spinner animation="border" style={{ color: '#6366F1', marginBottom: 12 }} />
+                        <Spinner animation="border" style={{ color: '#FF570A', marginBottom: 12 }} />
                         <p style={{ color: 'var(--text-secondary)', marginBottom: 0, fontSize: '0.88rem' }}>
                             Scan in progress — results will appear here automatically.
                         </p>
@@ -479,7 +479,7 @@ export default function RepositoryDashboard() {
                             <div className="col-6 col-md-4 col-lg">
                                 <StatCard
                                     icon={<FaBug size={16} />}
-                                    iconBg="rgba(99,102,241,0.12)" iconColor="#818CF8"
+                                    iconBg="rgba(255,87,10,0.12)" iconColor="#FF7A30"
                                     value={totalIssues || stats?.total_issues}
                                     label="Total Issues"
                                 />
@@ -515,7 +515,7 @@ export default function RepositoryDashboard() {
                             icon={FaRobot}
                             action={
                                 <button className="btn btn-link p-0 d-flex align-items-center gap-1"
-                                    style={{ color: '#818CF8', fontSize: '0.78rem', fontWeight: 600, textDecoration: 'none' }}
+                                    style={{ color: '#FF7A30', fontSize: '0.78rem', fontWeight: 600, textDecoration: 'none' }}
                                     onClick={() => navigate(`/reviews/${review.id}`)}>
                                     Full report <FaArrowRight size={9} />
                                 </button>
@@ -527,7 +527,7 @@ export default function RepositoryDashboard() {
                             <div className="col-md-6">
                                 <div className="dash-card h-100">
                                     <div className="dash-card-header">
-                                        <FaChartBar size={12} style={{ color: '#6366F1' }} />
+                                        <FaChartBar size={12} style={{ color: '#FF570A' }} />
                                         Category Scores
                                     </div>
                                     <div className="p-3 pt-2">
@@ -541,7 +541,7 @@ export default function RepositoryDashboard() {
                             <div className="col-md-6">
                                 <div className="dash-card h-100">
                                     <div className="dash-card-header">
-                                        <FaListUl size={12} style={{ color: '#6366F1' }} />
+                                        <FaListUl size={12} style={{ color: '#FF570A' }} />
                                         Fix First
                                     </div>
                                     <div className="p-3 pt-2" style={{ maxHeight: 340, overflowY: 'auto' }}>
@@ -568,7 +568,7 @@ export default function RepositoryDashboard() {
                             icon={FaShieldAlt}
                             action={
                                 <button className="btn btn-link p-0 d-flex align-items-center gap-1"
-                                    style={{ color: '#818CF8', fontSize: '0.78rem', fontWeight: 600, textDecoration: 'none' }}
+                                    style={{ color: '#FF7A30', fontSize: '0.78rem', fontWeight: 600, textDecoration: 'none' }}
                                     onClick={() => navigate(`/reviews/${review.id}`)}>
                                     View all <FaArrowRight size={9} />
                                 </button>

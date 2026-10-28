@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 from collections import defaultdict
 import uuid
 
-from models import db, Feedback, Issue, Review, Repository
+from models import db, Feedback, Issue, Review, Repository, User
 
 feedback_bp = Blueprint('feedback', __name__, url_prefix='/api/feedback')
 
@@ -44,8 +44,17 @@ def submit_feedback():
         if not review:
             return jsonify({"error": "Review not found"}), 404
 
-        # Get user ID from session
-        user_id = session.get('user', {}).get('id')
+        # Verify issue belongs to review (prevents cross-tenant IDOR/BOLA)
+        if issue.review_id != review.id:
+            return jsonify({"error": "Issue does not belong to the specified review"}), 400
+
+        # Verify authorization: current user must own the repository the issue belongs to
+        user_session = session.get('user', {})
+        user_id = user_session.get('id')
+        user_db = User.query.get(user_id) if user_id else User.query.filter_by(username=user_session.get('login')).first()
+        repo = review.repository if review else None
+        if not user_db or not repo or repo.connected_by != user_db.id:
+            return jsonify({"error": "Forbidden: Access denied to this issue"}), 403
 
         # 'reset' undoes prior accept/dismiss feedback: clear the issue's status
         # without recording a feedback row (it isn't a quality signal itself).

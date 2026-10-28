@@ -31,12 +31,13 @@ const RemediationPanel = ({ finding, onApplyFix }) => {
         fontSize: '0.85rem',
         padding: '1rem',
         borderRadius: '4px',
-        backgroundColor: '#f8f9fa'
+        backgroundColor: 'var(--surface-card-elevated, #151923)',
+        color: 'var(--text-primary)'
     };
 
     return (
-        <div className="border rounded-3 overflow-hidden shadow-sm mt-3">
-            <div className="bg-light px-3 py-2 border-bottom d-flex align-items-center justify-content-between">
+        <div className="rounded-3 overflow-hidden shadow-sm mt-3" style={{ border: '1px solid var(--border-default)', background: 'var(--surface-card)' }}>
+            <div className="px-3 py-2 border-bottom d-flex align-items-center justify-content-between" style={{ background: 'var(--surface-card-elevated)', borderColor: 'var(--border-default)' }}>
                 <h6 className="mb-0 fw-bold d-flex align-items-center gap-2">
                     <FaWrench size={14} className="text-primary" /> Suggested Fix
                 </h6>
@@ -46,7 +47,7 @@ const RemediationPanel = ({ finding, onApplyFix }) => {
             </div>
 
             <div className="p-3">
-                <div className="row g-0 border rounded mb-3">
+                <div className="row g-0 rounded mb-3" style={{ border: '1px solid var(--border-default)' }}>
                     <div className="col-12 border-bottom p-2 bg-danger-subtle text-danger small">
                         <span className="fw-bold">-</span> {finding.code_snippet || 'Original Code'}
                     </div>

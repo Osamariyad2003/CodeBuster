@@ -60,8 +60,21 @@ class SemgrepAnalyzer:
                                 'Detected yaml.load() without explicit Loader. This can lead to arbitrary code execution.',
                                 file_path, node.lineno, 'yaml.load(...)', 0.8
                             ))
-        except SyntaxError:
-            pass # Skip malformed files
+
+                    # Detect command injection via os.system or os.popen
+                    if isinstance(node.func, ast.Attribute) and node.func.attr in ['system', 'popen']:
+                        if isinstance(node.func.value, ast.Name) and node.func.value.id == 'os':
+                            findings.append(self._create_finding(
+                                'critical', 'command_injection', f'Command Injection via os.{node.func.attr}',
+                                f'Direct invocation of os.{node.func.attr}() can lead to remote command injection.',
+                                file_path, node.lineno, f'os.{node.func.attr}(...)', 0.95
+                            ))
+        except SyntaxError as e:
+            findings.append(self._create_finding(
+                'major', 'syntax_error', 'Python Syntax Error',
+                f'File contains invalid Python syntax: {e.msg} at line {e.lineno}',
+                file_path, e.lineno or 1, str(e.text or '').strip(), 0.99
+            ))
         return findings
 
     def _create_finding(self, severity, category, title, description, file, line, snippet, confidence):

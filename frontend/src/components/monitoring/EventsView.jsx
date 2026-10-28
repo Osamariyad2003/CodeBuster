@@ -68,9 +68,9 @@ export default function EventsView({ repoFullName }) {
                 </Button>
             </div>
 
-            <div className="table-responsive">
+            <div className="table-responsive" style={{ background: 'var(--surface-card)', border: '1px solid var(--border-default)', borderRadius: 14 }}>
                 <Table hover className="align-middle">
-                    <thead className="table-light">
+                    <thead style={{ background: 'var(--surface-card-elevated)', color: 'var(--text-muted)' }}>
                         <tr>
                             <th>Time</th>
                             <th>Delivery ID</th>

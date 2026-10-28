@@ -4,7 +4,7 @@ CodeBuster is a production-quality, AI-powered code review platform. It leverage
 
 ---
 
-## 🏗️ Fail-Safe Engineering
+## 🏗 Fail-Safe Engineering
 
 This application is built with a **resilience-first** mindset:
 - **No White Screens**: Global `ErrorBoundary` and `DataLoader` components ensure a graceful fallback for every network or logic error.

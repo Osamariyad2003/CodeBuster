@@ -112,13 +112,13 @@ class ReviewOrchestrator:
                         major = sum(1 for f in codeql_findings if f.get('severity') == 'major')
                         print(f"   [CHART] CodeQL breakdown: {critical} critical, {major} major, {len(codeql_findings) - critical - major} other")
                 except Exception as e:
-                    print(f"[WARN]️ Error running CodeQL analyzer: {e}")
+                    print(f"[WARN] Error running CodeQL analyzer: {e}")
                     import traceback
                     traceback.print_exc()
             else:
-                print("[WARN]️ CodeQL skipped: missing installation_id or repo_full_name")
+                print("[WARN] CodeQL skipped: missing installation_id or repo_full_name")
         else:
-            print("[INFO]️ CodeQL disabled or no repository context")
+            print("[INFO] CodeQL disabled or no repository context")
         
         # Step 2: Run other analyzers (after CodeQL)
         print("\n" + "=" * 60)
@@ -233,7 +233,7 @@ class ReviewOrchestrator:
                 all_findings.extend(coverage_findings)
                 print(f"   [OK] Coverage analyzer: {len(coverage_findings)} findings")
             else:
-                print("   [INFO]️ Skipping coverage: No supported coverage reports found (.xml)")
+                print("   [INFO] Skipping coverage: No supported coverage reports found (.xml)")
 
         if enabled_analyzers.get('frontend', True):
             print("[SEARCH] Running Chrome DevTools Performance analyzer...")
@@ -268,16 +268,17 @@ class ReviewOrchestrator:
                 all_findings.extend(sonarqube_findings)
                 print(f"   [OK] SonarQube: {len(sonarqube_findings)} findings")
             except Exception as e:
-                print(f"   [WARN]️ SonarQube skipped: {e}")
+                print(f"   [WARN] SonarQube skipped: {e}")
 
-        # Dimension analyzers (strict JSON contract) – optional; run with real repo + files
+        # Dimension analyzers (strict JSON contract) – includes AI Senior Engineer pass
         dimension_results = {}
-        if enabled_analyzers.get('dimension', True) and repository_context:
+        if enabled_analyzers.get('dimension', True):
+            _repo_ctx = repository_context or {}
             repo_meta = {
-                'repo_id': repository_context.get('repo_id', 'unknown'),
-                'repo_full_name': repository_context.get('full_name', 'unknown'),
-                'repo_url': repository_context.get('repo_url', 'unknown'),
-                'commit_sha': repository_context.get('commit_sha', 'unknown'),
+                'repo_id': _repo_ctx.get('repo_id', 'unknown'),
+                'repo_full_name': _repo_ctx.get('full_name') or _repo_ctx.get('repo_name') or 'repository',
+                'repo_url': _repo_ctx.get('repo_url', 'unknown'),
+                'commit_sha': _repo_ctx.get('commit_sha', 'unknown'),
             }
             for key in SUPPORTED_ANALYZER_KEYS:
                 try:
@@ -308,7 +309,7 @@ class ReviewOrchestrator:
                         })
                     print(f"   [OK] Dimension ({key}): score={dim_result.category_result.score}, issues={len(dim_result.issues)}")
                 except Exception as e:
-                    print(f"   [INFO]️ Dimension ({key}) skipped: {e}")
+                    print(f"   [INFO] Dimension ({key}) skipped: {e}")
 
         # CodeReviewer (Microsoft CodeBERT) – optional; runs when CODEREVIEWER_ENABLED=1
         if enabled_analyzers.get('codereviewer', True):
@@ -318,7 +319,7 @@ class ReviewOrchestrator:
                     all_findings.extend(cr_findings)
                     print(f"   [OK] CodeReviewer (CodeBERT): {len(cr_findings)} suggestions")
             except Exception as e:
-                print(f"   [INFO]️ CodeReviewer skipped: {e}")
+                print(f"   [INFO] CodeReviewer skipped: {e}")
         
         print(f"\n[OK] Total findings from all analyzers: {len(all_findings)}")
         
@@ -343,7 +344,7 @@ class ReviewOrchestrator:
             from .finding_trust_service import apply_trust_adjustment
             deduplicated = apply_trust_adjustment(deduplicated)
         except Exception as e:
-            print(f"   [INFO]️ Trust adjustment skipped: {e}")
+            print(f"   [INFO] Trust adjustment skipped: {e}")
 
         # Step 4: AI reasoning (after CodeQL and all analyzers)
         print("\n" + "=" * 60)
@@ -418,7 +419,7 @@ class ReviewOrchestrator:
                             ai_stats['failed'] += 1
                     except Exception as exc:
                         ai_stats['failed'] += 1
-                        print(f"   [WARN]️ enhancement task crashed for issue index {i}: {exc}")
+                        print(f"   [WARN] enhancement task crashed for issue index {i}: {exc}")
             print(
                 f"   [*] Enhanced {ai_stats['enhanced']}/{ai_stats['attempted']} issues "
                 f"({ai_stats['failed']} fell back to rule-based, "
@@ -449,7 +450,7 @@ class ReviewOrchestrator:
             else:
                 print("   (AI unavailable — using deterministic summary)")
         except Exception as exc:
-            print(f"   [WARN]️ executive summary failed: {exc}")
+            print(f"   [WARN] executive summary failed: {exc}")
 
         # Step 5: Format final result (consistent JSON formula)
         end_time = datetime.utcnow()
@@ -512,14 +513,27 @@ class ReviewOrchestrator:
     def _deduplicate_findings(self, findings: List[Dict]) -> List[Dict]:
         """Deduplicate findings (same issue, different tools)."""
         seen = {}
+        import json
         
+        def _ev_key(item):
+            if isinstance(item, dict):
+                try:
+                    return json.dumps(item, sort_keys=True)
+                except Exception:
+                    return str(item)
+            return str(item)
+
         for finding in findings:
-            # Create key from file, line, and category
             file_path = finding.get('file', finding.get('file_path', 'unknown'))
             line = finding.get('line', finding.get('line_number'))
             category = finding.get('category', finding.get('module', 'unknown'))
+            title = (finding.get('title') or finding.get('description') or '').strip().lower()
             
-            key = (file_path, line, category)
+            # Avoid collapsing distinct findings when line number is absent
+            if line is None:
+                key = (file_path, 'no-line', category, title)
+            else:
+                key = (file_path, line, category)
             
             if key in seen:
                 # Merge: combine tools and increase confidence
@@ -533,16 +547,20 @@ class ReviewOrchestrator:
                 existing['tools'] = existing_tools
                 existing['confidence'] = min(1.0, existing.get('confidence', 0.5) + 0.1)
                 
-                # Merge evidence
-                existing_evidence = existing.get('evidence', [])
-                new_evidence = finding.get('evidence', [])
-                existing['evidence'] = list(set(existing_evidence + new_evidence))
+                # Merge evidence safely without set() TypeError on dicts
+                existing_evidence = list(existing.get('evidence') or [])
+                new_evidence = list(finding.get('evidence') or [])
+                seen_ev_keys = {_ev_key(ev) for ev in existing_evidence}
+                for ev in new_evidence:
+                    k = _ev_key(ev)
+                    if k not in seen_ev_keys:
+                        seen_ev_keys.add(k)
+                        existing_evidence.append(ev)
+                existing['evidence'] = existing_evidence
             else:
-                # Add ID if missing
                 if 'id' not in finding:
                     finding['id'] = f"issue-{len(seen)+1:03d}"
                 
-                # Ensure tools is a list
                 finding['tools'] = [finding.get('tool', 'unknown')]
                 seen[key] = finding
         
@@ -630,6 +648,6 @@ class ReviewOrchestrator:
                 try:
                     return yaml.safe_load(file.get('content', '')) or {}
                 except Exception as e:
-                    print(f"[WARN]️ Error parsing .codebuster.yaml: {e}")
+                    print(f"[WARN] Error parsing .codebuster.yaml: {e}")
         return {}
 

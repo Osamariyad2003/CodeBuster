@@ -41,7 +41,7 @@ function shortId(id) {
 /* ── Status config ───────────────────────────────────────────── */
 const STATUS = {
     completed: { color: '#22c55e', bg: 'rgba(34,197,94,0.12)',   label: 'Completed', Icon: FaCheck    },
-    running:   { color: '#6366f1', bg: 'rgba(99,102,241,0.12)',  label: 'Running',   Icon: FaSpinner, spin: true },
+    running:   { color: '#FF570A', bg: 'rgba(255,87,10,0.12)',  label: 'Running',   Icon: FaSpinner, spin: true },
     pending:   { color: '#f59e0b', bg: 'rgba(245,158,11,0.12)',  label: 'Pending',   Icon: FaClock    },
     failed:    { color: '#ef4444', bg: 'rgba(239,68,68,0.12)',   label: 'Failed',    Icon: FaTimes    },
 };
@@ -66,7 +66,7 @@ function SummaryStrip({ jobs }) {
     const counts = { running: 0, pending: 0, completed: 0, failed: 0 };
     jobs.forEach(j => { if (j.status in counts) counts[j.status]++; });
     const pills = [
-        { key: 'running',   label: 'Running',   color: '#6366f1' },
+        { key: 'running',   label: 'Running',   color: '#FF570A' },
         { key: 'completed', label: 'Completed', color: '#22c55e' },
         { key: 'failed',    label: 'Failed',    color: '#ef4444' },
         { key: 'pending',   label: 'Pending',   color: '#f59e0b' },
@@ -131,7 +131,7 @@ function JobRow({ job, expanded, onToggle, onSelect }) {
                 {/* Job ID + repo */}
                 <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <code style={{ fontSize: 12, color: '#818cf8', fontFamily: 'var(--font-mono, monospace)' }}>
+                        <code style={{ fontSize: 12, color: '#FF7A30', fontFamily: 'var(--font-mono, monospace)' }}>
                             {shortId(job.job_id)}
                         </code>
                         <StatusChip status={job.status} />
@@ -202,7 +202,7 @@ function JobDetail({ job, onDeepDive }) {
                 <div style={{ marginBottom: 14 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
                         <span style={{ fontSize: 11, color: '#6b7280', fontWeight: 600 }}>PROGRESS</span>
-                        <span style={{ fontSize: 11, color: '#818cf8' }}>{job.progress || 0}%</span>
+                        <span style={{ fontSize: 11, color: '#FF7A30' }}>{job.progress || 0}%</span>
                     </div>
                     <ProgressBar animated now={job.progress || 40} variant="primary" style={{ height: 6, borderRadius: 4 }} />
                 </div>
@@ -393,7 +393,7 @@ function SessionModal({ job, onClose, loading }) {
                     display: 'flex', alignItems: 'center', gap: 10,
                     background: 'var(--surface-card-elevated, #1C2333)',
                 }}>
-                    <FaBolt size={14} style={{ color: '#818cf8' }} />
+                    <FaBolt size={14} style={{ color: '#FF7A30' }} />
                     <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ fontWeight: 700, fontSize: 14, color: 'var(--text-primary, #e6edf3)' }}>
                             Worker Session
@@ -413,7 +413,7 @@ function SessionModal({ job, onClose, loading }) {
 
                 {loading ? (
                     <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 40 }}>
-                        <Spinner animation="border" size="sm" style={{ color: '#818cf8' }} />
+                        <Spinner animation="border" size="sm" style={{ color: '#FF7A30' }} />
                     </div>
                 ) : (
                     <div style={{ flex: 1, overflowY: 'auto', padding: 20 }}>
@@ -545,15 +545,15 @@ export default function JobsView({ repoFullName }) {
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16, flexWrap: 'wrap' }}>
                 <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-                        <FaServer size={14} style={{ color: '#818cf8' }} />
+                        <FaServer size={14} style={{ color: '#FF7A30' }} />
                         <span style={{ fontWeight: 700, fontSize: 15, color: 'var(--text-primary, #e6edf3)' }}>
                             Worker Sessions
                         </span>
                         {hasRunning && (
                             <span style={{
                                 display: 'inline-flex', alignItems: 'center', gap: 4,
-                                background: 'rgba(99,102,241,0.12)', color: '#818cf8',
-                                border: '1px solid rgba(99,102,241,0.25)',
+                                background: 'rgba(255,87,10,0.12)', color: '#FF7A30',
+                                border: '1px solid rgba(255,87,10,0.25)',
                                 borderRadius: 999, padding: '2px 8px', fontSize: 10, fontWeight: 700,
                             }}>
                                 <FaCircle size={6} style={{ animationDuration: '2s' }} />
@@ -596,8 +596,8 @@ export default function JobsView({ repoFullName }) {
                             onClick={() => setStatusFilter(f)}
                             style={{
                                 background: statusFilter === f ? 'rgba(99,102,241,0.15)' : 'transparent',
-                                color: statusFilter === f ? '#818cf8' : '#6b7280',
-                                border: `1px solid ${statusFilter === f ? 'rgba(99,102,241,0.4)' : 'var(--border-default, #30363D)'}`,
+                                color: statusFilter === f ? '#FF570A' : '#6b7280',
+                                border: `1px solid ${statusFilter === f ? 'rgba(255,87,10,0.4)' : 'var(--border-default, #30363D)'}`,
                                 borderRadius: 6, padding: '3px 10px',
                                 fontSize: 11, fontWeight: 600, cursor: 'pointer',
                                 textTransform: 'capitalize',

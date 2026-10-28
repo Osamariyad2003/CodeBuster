@@ -9,9 +9,9 @@ import { apiClient } from '../lib/apiClient';
 /* ─── Palette ─────────────────────────────────────────────────────────── */
 const C = {
   critical: '#EF4444', major:  '#F59E0B',
-  healthy:  '#22C55E', info:   '#818CF8',
+  healthy:  '#22C55E', info:   '#687FF5',
   entry:    '#E879F9', test:   '#34D399',
-  config:   '#94A3B8', link:   'rgba(129,140,248,0.28)',
+  config:   '#94A3B8', link:   'rgba(255,87,10,0.28)',
   linkCrit: 'rgba(239,68,68,0.55)', bg: '#04040A',
 };
 
@@ -234,7 +234,7 @@ function NodePanel({ node, onClose }) {
       <div style={{ display: 'flex', flexDirection: 'column' }}>
         {[
           { label: 'Issues',  value: node.issues ?? 0, accent: node.issues > 5 ? C.critical : node.issues > 0 ? C.major : C.healthy },
-          { label: 'Type',    value: node.group,        accent: '#818CF8' },
+          { label: 'Type',    value: node.group,        accent: '#687FF5' },
           { label: 'Health',  value: `${node.health} / 100`, accent: color },
         ].map(({ label, value, accent }) => (
           <div key={label} style={{
@@ -268,7 +268,7 @@ function NodePanel({ node, onClose }) {
 
       <button style={{
         marginTop: 'auto',
-        background: 'linear-gradient(135deg,#6366F1,#818CF8)', border: 'none',
+        background: 'linear-gradient(135deg,#FF570A,#FF7A30)', border: 'none',
         borderRadius: 7, color: '#fff', padding: '9px 0',
         fontWeight: 600, fontSize: 12, cursor: 'pointer',
         boxShadow: '0 4px 14px rgba(99,102,241,0.35)',
@@ -293,7 +293,7 @@ function StatBar({ nodes }) {
   if (!nodes?.length) return null;
   const avg  = Math.round(nodes.reduce((s, n) => s + n.health, 0) / nodes.length);
   const pills = [
-    { label: 'Nodes',    value: nodes.length,                                   color: '#818CF8' },
+    { label: 'Nodes',    value: nodes.length,                                   color: '#FF7A30' },
     { label: 'Avg',      value: `${avg}%`,                                      color: avg >= 70 ? C.healthy : C.major },
     { label: 'Critical', value: nodes.filter(n => n.health < 35).length,        color: C.critical },
     { label: 'Degraded', value: nodes.filter(n => n.health >= 35 && n.health < 60).length, color: C.major },
@@ -435,8 +435,8 @@ export default function ConstellationPage() {
   /* Repos that have issues — same filter as the Repositories tab */
   const reposWithIssues = repos.filter(r => (r.issues_count ?? 0) > 0);
 
-  const gradeColor = g => ({ A:'#059669', B:'#4F46E5', C:'#F59E0B', D:'#EF4444', F:'#991B1B' }[g] || '#9CA3AF');
-  const scoreColor = s => s == null ? '#9CA3AF' : s >= 85 ? '#059669' : s >= 70 ? '#4F46E5' : s >= 50 ? '#F59E0B' : '#EF4444';
+  const gradeColor = g => ({ A:'#059669', B:'#687FF5', C:'#F59E0B', D:'#EF4444', F:'#991B1B' }[g] || '#9CA3AF');
+  const scoreColor = s => s == null ? '#9CA3AF' : s >= 85 ? '#059669' : s >= 70 ? '#687FF5' : s >= 50 ? '#F59E0B' : '#EF4444';
 
   const repoLabel = selectedRepo
     ? (selectedRepo.full_name || selectedRepo.name || 'Select repository')
@@ -526,7 +526,7 @@ export default function ConstellationPage() {
                     <div className="d-flex align-items-center gap-2 mb-2">
                       <div style={{
                         width: 28, height: 28, borderRadius: 6,
-                        background: '#F3F4F6', color: '#374151',
+                        background: 'var(--surface-card-elevated, #151923)', color: 'var(--text-secondary, #94A3B8)',
                         display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
                       }}>
                         <FaGithub size={13} />
@@ -551,7 +551,7 @@ export default function ConstellationPage() {
                     {/* Row 2: health bar */}
                     <div className="d-flex align-items-center gap-2 mb-2">
                       <span style={{ fontSize: 10, color: 'var(--text-muted)', minWidth: 72 }}>Health score</span>
-                      <div style={{ flex: 1, height: 5, background: '#F3F4F6', borderRadius: 3, overflow: 'hidden' }}>
+                      <div style={{ flex: 1, height: 5, background: 'var(--surface-muted, rgba(255,255,255,0.08))', borderRadius: 3, overflow: 'hidden' }}>
                         <div style={{
                           width: `${Math.max(2, Math.min(100, score ?? 0))}%`,
                           height: '100%', background: scoreColor(score), borderRadius: 3,
@@ -683,7 +683,7 @@ export default function ConstellationPage() {
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               background: 'rgba(4,4,10,0.65)', backdropFilter: 'blur(4px)', zIndex: 5,
             }}>
-              <span style={{ color: '#818CF8', fontFamily: 'var(--font-display)', fontSize: '1rem', letterSpacing: '-0.02em' }}>
+              <span style={{ color: '#FF7A30', fontFamily: 'var(--font-display)', fontSize: '1rem', letterSpacing: '-0.02em' }}>
                 Mapping constellation…
               </span>
             </div>

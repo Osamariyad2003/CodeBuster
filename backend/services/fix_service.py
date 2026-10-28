@@ -367,7 +367,9 @@ class FixService:
                 return {"success": False, "error": f"Unexpected response when reading `{default_branch}` ref."}
 
             timestamp = datetime.utcnow().strftime('%Y%m%d%H%M%S')
-            new_branch = f"fix/codebuster-sprint-{timestamp}"
+            import secrets
+            branch_rand = secrets.token_hex(4)
+            new_branch = f"fix/codebuster-sprint-{timestamp}-{branch_rand}"
             branch_response = requests.post(
                 f"https://api.github.com/repos/{repo_full_name}/git/refs",
                 headers=self.headers,
@@ -407,7 +409,13 @@ class FixService:
                 file_commit_summaries = []
                 file_applied: List[Dict[str, Any]] = []
 
-                for issue in file_issues:
+                # Sort descending by line number to apply bottom-to-top and prevent line drift
+                sorted_file_issues = sorted(
+                    file_issues,
+                    key=lambda iss: getattr(iss, 'line_number', 0) or 0,
+                    reverse=True
+                )
+                for issue in sorted_file_issues:
                     fix_result = self._compute_single_fix(content, file_path, issue)
                     if not fix_result.get("success"):
                         skipped.append({
@@ -1128,10 +1136,20 @@ class FixService:
         var_name = self._env_var_name(issue_title, file_path)
 
         original_line = lines[line_number - 1]
-        # Locate the first string literal on the line ("..." or '...').
-        literal_match = re.search(r"""(['"])((?:\\.|(?!\1).)*)\1""", original_line)
-        if not literal_match:
+        # Locate all string literals on the line
+        matches = list(re.finditer(r"""(['"])((?:\\.|(?!\1).)*)\1""", original_line))
+        if not matches:
             return full_content, ''
+        # Prefer literal matching secret patterns or long token (>16 chars); fallback to last literal
+        chosen_match = None
+        for m in reversed(matches):
+            val = m.group(2)
+            if re.search(r'^(sk_live|sk_test|AKIA|ghp_|xox[baprs]|AIza|sq0csp|access_token|AC|SK|[a-zA-Z0-9_-]{16,})', val):
+                chosen_match = m
+                break
+        if not chosen_match:
+            chosen_match = matches[-1]
+        literal_match = chosen_match
 
         # If the template is unknown, fall back to a placeholder literal + TODO.
         if env_template:

@@ -5,7 +5,7 @@ import LiveStatusDot from './LiveStatusDot';
 
 const WorkerCard = ({ workerId, status = 'idle', currentJob = null }) => {
     return (
-        <Card className="shadow-sm border-0 h-100">
+        <Card className="shadow-sm h-100" style={{ background: 'var(--surface-card)', border: '1px solid var(--border-default)', borderRadius: '12px' }}>
             <Card.Body className="p-3">
                 <div className="d-flex justify-content-between align-items-center mb-3">
                     <div className="d-flex align-items-center gap-2">
@@ -23,10 +23,10 @@ const WorkerCard = ({ workerId, status = 'idle', currentJob = null }) => {
                 </div>
 
                 <div className="d-flex gap-2 mt-3">
-                    <Badge bg="light" text="dark" className="border font-monospace">
+                    <Badge bg="secondary" className="border border-secondary-subtle font-monospace">
                         CPU: {Math.floor(Math.random() * 30) + 10}%
                     </Badge>
-                    <Badge bg="light" text="dark" className="border font-monospace">
+                    <Badge bg="secondary" className="border border-secondary-subtle font-monospace">
                         MEM: {Math.floor(Math.random() * 200) + 100}MB
                     </Badge>
                 </div>

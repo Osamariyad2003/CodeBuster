@@ -21,11 +21,12 @@ import {
   FaListOl,
   FaBrain,
   FaRocket,
+  FaTimesCircle,
 } from "react-icons/fa";
 import { codebusterApi, ReviewDetail as ReviewDetailType, Finding } from "../api/codebuster";
 import IssueDetailDrawer from "../components/reviews/IssueDetailDrawer";
 import { useAuth } from "../AuthContext";
-import { apiClient } from "../lib/apiClient";
+import { apiClient, triggerScan } from "../lib/apiClient";
 
 const SEVERITY_RANK: Record<string, number> = { CRITICAL: 0, MAJOR: 1, MINOR: 2, INFO: 3 };
 const FIX_SPRINT_SIZE = 5;
@@ -34,8 +35,8 @@ const SEVERITY_OPTIONS = ["CRITICAL", "MAJOR", "MINOR", "INFO"] as const;
 
 const gradeColor = (grade?: string | null): string => {
   switch (grade) {
-    case "A": return "#059669";
-    case "B": return "#4F46E5";
+    case "A": return "#25E2A8";
+    case "B": return "#687FF5";
     case "C": return "#F59E0B";
     case "D": return "#EF4444";
     case "F": return "#991B1B";
@@ -45,8 +46,8 @@ const gradeColor = (grade?: string | null): string => {
 
 const scoreColor = (score?: number | null): string => {
   if (score == null) return "#9CA3AF";
-  if (score >= 85) return "#059669";
-  if (score >= 70) return "#4F46E5";
+  if (score >= 85) return "#25E2A8";
+  if (score >= 70) return "#687FF5";
   if (score >= 50) return "#F59E0B";
   return "#EF4444";
 };
@@ -55,7 +56,7 @@ const severityColor = (sev?: string): string => {
   const s = (sev || "").toUpperCase();
   if (s === "CRITICAL") return "#DC2626";
   if (s === "MAJOR") return "#F59E0B";
-  if (s === "MINOR") return "#4F46E5";
+  if (s === "MINOR") return "#687FF5";
   if (s === "INFO") return "#0EA5E9";
   return "#6B7280";
 };
@@ -128,6 +129,49 @@ export default function ReviewDetailPage() {
 
   const findings: Finding[] = review?.findings ?? [];
   const hasFilter = Boolean(severity || category);
+  const [rerunning, setRerunning] = useState(false);
+  const [retryMsg, setRetryMsg] = useState<string | null>(null);
+
+  const handleRetryScan = async () => {
+    if (!review?.repo_id) return;
+    setRerunning(true);
+    setRetryMsg(null);
+    try {
+      const res = await triggerScan(review.repo_id, {});
+      if (res?.success) {
+        setRetryMsg("Review scan re-queued successfully! Refreshing...");
+        setTimeout(() => {
+          window.location.reload();
+        }, 1500);
+      } else {
+        setRetryMsg(res?.error || "Failed to rerun review scan.");
+      }
+    } catch (err: any) {
+      setRetryMsg(err?.message || "Failed to rerun review scan.");
+    } finally {
+      setRerunning(false);
+    }
+  };
+
+  const normalizedCategoryScores = useMemo(() => {
+    const raw = (review as any)?.category_scores;
+    if (!raw) return [];
+    if (Array.isArray(raw)) {
+      return raw.map((c: any, idx: number) => ({
+        key: c.key || `cat-${idx}`,
+        label: c.label || c.key || `Category ${idx + 1}`,
+        score: typeof c.score === "number" ? c.score : (typeof c.value === "number" ? c.value : 0),
+      }));
+    }
+    if (typeof raw === "object") {
+      return Object.entries(raw).map(([key, val]: [string, any]) => ({
+        key,
+        label: val?.label || key.replace(/_/g, " "),
+        score: typeof val?.score === "number" ? val.score : (typeof val === "number" ? val : 0),
+      }));
+    }
+    return [];
+  }, [review?.category_scores]);
 
   // Fix Sprint targets: unresolved issues, worst severity first, top N —
   // this is deliberately automatic (no manual multi-select) so the whole
@@ -194,9 +238,9 @@ export default function ReviewDetailPage() {
       <div
         className="p-4 mb-4"
         style={{
-          background: "white",
-          border: "1px solid #E5E7EB",
-          borderRadius: 12,
+          background: "var(--surface-card)",
+          border: "1px solid var(--border-default)",
+          borderRadius: 14,
           boxShadow: "0 1px 2px rgba(0, 0, 0, 0.02)",
         }}
       >
@@ -207,25 +251,36 @@ export default function ReviewDetailPage() {
               width: 64,
               height: 64,
               borderRadius: 14,
-              background: gradeColor(grade),
-              color: "white",
+              background: review.status === "failed" ? "rgba(239, 68, 68, 0.15)" : gradeColor(grade),
+              color: review.status === "failed" ? "#EF4444" : "white",
+              border: review.status === "failed" ? "1px solid rgba(239, 68, 68, 0.3)" : "none",
               fontWeight: 700,
-              fontSize: 28,
+              fontSize: review.status === "failed" ? 18 : 28,
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
               flexShrink: 0,
             }}
           >
-            {grade || "—"}
+            {review.status === "failed" ? "FAIL" : (grade || "—")}
           </div>
 
           <div className="flex-grow-1" style={{ minWidth: 200 }}>
-            <div className="d-flex align-items-baseline gap-2 flex-wrap">
-              <h4 className="mb-0 fw-bold" style={{ color: "#111827" }}>
+            <div className="d-flex align-items-center gap-2 flex-wrap">
+              <h4 className="mb-0 fw-bold" style={{ color: "var(--text-primary)" }}>
                 Review
               </h4>
               <code className="text-muted small">{id?.slice(0, 8)}</code>
+              {review.status === "failed" && (
+                <Badge bg="danger" style={{ fontSize: "0.7rem", letterSpacing: "0.04em" }}>
+                  FAILED
+                </Badge>
+              )}
+              {review.status === "completed" && (
+                <Badge bg="success-subtle" className="text-success border border-success-subtle" style={{ fontSize: "0.7rem" }}>
+                  COMPLETED
+                </Badge>
+              )}
             </div>
             <div className="text-muted small mt-1 d-flex align-items-center gap-3 flex-wrap">
               {repoName && (
@@ -247,7 +302,7 @@ export default function ReviewDetailPage() {
                   ? "#059669"
                   : stats.failed > 0
                   ? "#F59E0B"
-                  : "#4F46E5";
+                  : "#687FF5";
                 const label = offline
                   ? "AI offline (rule-based)"
                   : `AI: ${stats.enhanced}/${stats.attempted} enhanced`;
@@ -282,6 +337,36 @@ export default function ReviewDetailPage() {
               })()}
             </div>
 
+            {review.status === "failed" && (
+              <div
+                className="mt-3 p-3 d-flex align-items-center justify-content-between flex-wrap gap-2"
+                style={{
+                  background: "rgba(239, 68, 68, 0.1)",
+                  border: "1px solid rgba(239, 68, 68, 0.25)",
+                  borderRadius: 10,
+                  color: "#FCA5A5",
+                }}
+              >
+                <div className="d-flex align-items-center gap-2">
+                  <FaExclamationTriangle size={15} className="text-danger flex-shrink-0" />
+                  <div>
+                    <span className="fw-semibold text-danger">Review Run Failed:</span>{" "}
+                    <span className="small">{review.error_message || "Failed to complete AST static review."}</span>
+                  </div>
+                </div>
+                <Button
+                  variant="outline-danger"
+                  size="sm"
+                  onClick={handleRetryScan}
+                  disabled={rerunning}
+                  style={{ borderRadius: 8, fontSize: "0.8rem", fontWeight: 600 }}
+                >
+                  {rerunning ? <Spinner size="sm" animation="border" className="me-1" /> : null}
+                  Retry Review Scan
+                </Button>
+              </div>
+            )}
+
             {/* Score with bar */}
             <div className="mt-3" style={{ maxWidth: 360 }}>
               <div className="d-flex justify-content-between align-items-baseline mb-1">
@@ -306,7 +391,7 @@ export default function ReviewDetailPage() {
               <div
                 style={{
                   height: 6,
-                  background: "#F3F4F6",
+                  background: "var(--surface-card-elevated)",
                   borderRadius: 3,
                   overflow: "hidden",
                 }}
@@ -327,10 +412,10 @@ export default function ReviewDetailPage() {
         </div>
 
         {/* Category scores */}
-        {review.category_scores && review.category_scores.length > 0 && (
+        {normalizedCategoryScores.length > 0 && (
           <div
             className="mt-4 pt-4"
-            style={{ borderTop: "1px solid #F3F4F6" }}
+            style={{ borderTop: "1px solid var(--border-subtle)" }}
           >
             <div
               className="text-muted mb-3"
@@ -344,13 +429,13 @@ export default function ReviewDetailPage() {
               Category Scores
             </div>
             <div className="row g-3">
-              {review.category_scores.map((c) => (
+              {normalizedCategoryScores.map((c) => (
                 <div key={c.key} className="col-6 col-md-4 col-lg-3">
                   <div
                     className="d-flex justify-content-between align-items-baseline mb-1"
                     style={{ fontSize: "0.85rem" }}
                   >
-                    <span style={{ color: "#374151" }}>{c.label}</span>
+                    <span style={{ color: "var(--text-secondary)" }}>{c.label}</span>
                     <span
                       className="fw-semibold"
                       style={{ color: scoreColor(c.score), fontSize: "0.8rem" }}
@@ -361,7 +446,7 @@ export default function ReviewDetailPage() {
                   <div
                     style={{
                       height: 4,
-                      background: "#F3F4F6",
+                      background: "var(--surface-card-elevated)",
                       borderRadius: 2,
                       overflow: "hidden",
                     }}
@@ -408,22 +493,22 @@ export default function ReviewDetailPage() {
           <div
             className="p-4 mb-4"
             style={{
-              background: "white",
-              border: "1px solid #E5E7EB",
+              background: "var(--surface-card)",
+              border: "1px solid var(--border-default)",
               borderRadius: 12,
               boxShadow: "0 1px 2px rgba(0, 0, 0, 0.02)",
-              borderLeft: "3px solid #4F46E5",
+              borderLeft: "3px solid #FF570A",
             }}
           >
             <div className="d-flex align-items-center mb-3 gap-2">
-              <FaLightbulb size={14} style={{ color: "#4F46E5" }} />
+              <FaLightbulb size={14} style={{ color: "#FF570A" }} />
               <span
                 style={{
                   fontSize: "0.7rem",
                   fontWeight: 700,
                   letterSpacing: "0.06em",
                   textTransform: "uppercase",
-                  color: "#4F46E5",
+                  color: "#FF570A",
                 }}
               >
                 AI Executive Summary
@@ -453,7 +538,7 @@ export default function ReviewDetailPage() {
             <p
               className="mb-3"
               style={{
-                color: "#111827",
+                color: "var(--text-primary)",
                 fontSize: "0.95rem",
                 lineHeight: 1.55,
                 whiteSpace: "pre-wrap",
@@ -491,25 +576,25 @@ export default function ReviewDetailPage() {
                       key={i}
                       className="px-3 py-2 d-flex align-items-start gap-2"
                       style={{
-                        background: "#FEF3C7",
-                        border: "1px solid #FDE68A",
+                        background: "rgba(245, 158, 11, 0.1)",
+                        border: "1px solid rgba(245, 158, 11, 0.25)",
                         borderRadius: 8,
                       }}
                     >
                       <FaExclamationTriangle
                         size={11}
-                        style={{ color: "#D97706", marginTop: 4, flexShrink: 0 }}
+                        style={{ color: "#F59E0B", marginTop: 4, flexShrink: 0 }}
                       />
                       <div style={{ minWidth: 0 }}>
                         <div
                           className="fw-semibold"
-                          style={{ fontSize: "0.85rem", color: "#92400E" }}
+                          style={{ fontSize: "0.85rem", color: "var(--text-primary)" }}
                         >
                           {risk.title}
                         </div>
                         <div
                           className="small"
-                          style={{ color: "#78350F", lineHeight: 1.45 }}
+                          style={{ color: "var(--text-secondary)", lineHeight: 1.45 }}
                         >
                           {risk.why_it_matters}
                         </div>
@@ -534,7 +619,7 @@ export default function ReviewDetailPage() {
                 >
                   <FaListOl size={11} /> Suggested fix order
                 </div>
-                <ol className="mb-0 ps-4" style={{ color: "#111827" }}>
+                <ol className="mb-0 ps-4" style={{ color: "var(--text-primary)" }}>
                   {summary.fix_priority_order.map((step, i) => {
                     const target = findings[step.issue_index];
                     return (
@@ -565,8 +650,8 @@ export default function ReviewDetailPage() {
       <div
         className="d-flex align-items-center gap-2 mb-3 px-3 py-2 flex-wrap"
         style={{
-          background: "white",
-          border: "1px solid #E5E7EB",
+          background: "var(--surface-card)",
+          border: "1px solid var(--border-default)",
           borderRadius: 10,
         }}
       >
@@ -616,8 +701,8 @@ export default function ReviewDetailPage() {
           }}
         >
           <div>
-            <div className="fw-bold d-flex align-items-center gap-2" style={{ color: "#111827", fontSize: "0.92rem" }}>
-              <FaRocket size={13} style={{ color: "#6366F1" }} /> Fix Sprint
+            <div className="fw-bold d-flex align-items-center gap-2" style={{ color: "var(--text-primary)", fontSize: "0.92rem" }}>
+              <FaRocket size={13} style={{ color: "#FF570A" }} /> Fix Sprint
             </div>
             <div className="text-muted small mt-1">
               AI fixes the top {sprintTargets.length} unresolved issue{sprintTargets.length === 1 ? "" : "s"} and opens one pull request.
@@ -627,7 +712,7 @@ export default function ReviewDetailPage() {
             onClick={runFixSprint}
             disabled={sprintRunning}
             style={{
-              background: "linear-gradient(135deg, #6366F1, #8B5CF6)",
+              background: "linear-gradient(135deg, #FF570A, #FF7A30)",
               border: "none", fontWeight: 700, borderRadius: 9, padding: "8px 18px",
             }}
           >
@@ -649,10 +734,10 @@ export default function ReviewDetailPage() {
       {sprintResult && (
         <div
           className="p-3 mb-3"
-          style={{ background: "white", border: "1px solid #E5E7EB", borderRadius: 12 }}
+          style={{ background: "var(--surface-card)", border: "1px solid var(--border-default)", borderRadius: 12 }}
         >
           <div className="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
-            <div className="fw-bold d-flex align-items-center gap-2" style={{ color: "#111827" }}>
+            <div className="fw-bold d-flex align-items-center gap-2" style={{ color: "var(--text-primary)" }}>
               <FaCheckCircle size={13} style={{ color: "#059669" }} />
               Fix Sprint complete — {(sprintResult.applied || []).length} issue(s) fixed
             </div>
@@ -680,7 +765,7 @@ export default function ReviewDetailPage() {
 
       {/* Findings header */}
       <div className="d-flex justify-content-between align-items-baseline mb-2 px-1">
-        <h6 className="mb-0 fw-bold" style={{ color: "#111827" }}>
+        <h6 className="mb-0 fw-bold" style={{ color: "var(--text-primary)" }}>
           Findings
           <span className="text-muted ms-2 fw-normal">({findings.length})</span>
         </h6>
@@ -692,12 +777,49 @@ export default function ReviewDetailPage() {
       </div>
 
       {/* Findings list */}
-      {findings.length === 0 ? (
+      {review.status === "failed" ? (
         <div
           className="text-center py-5 px-4"
           style={{
-            background: "white",
-            border: "2px dashed #E5E7EB",
+            background: "var(--surface-card)",
+            border: "1px solid rgba(239, 68, 68, 0.25)",
+            borderRadius: 14,
+          }}
+        >
+          <FaTimesCircle size={36} className="text-danger mb-3 opacity-75" />
+          <h5 className="fw-bold text-danger mb-2">Analysis Failed to Complete</h5>
+          <p className="text-muted small mb-3" style={{ maxWidth: 520, margin: "0 auto" }}>
+            {review.error_message || "The review failed before analysis completed."}
+          </p>
+          <div className="d-flex justify-content-center gap-2 flex-wrap">
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={handleRetryScan}
+              disabled={rerunning}
+              style={{ borderRadius: 8, fontWeight: 600 }}
+            >
+              {rerunning ? <Spinner size="sm" animation="border" className="me-1" /> : null}
+              Rerun Code Review
+            </Button>
+            <Button
+              as={Link as any}
+              to={`/repos/${review.repo_id}/settings`}
+              variant="outline-secondary"
+              size="sm"
+              style={{ borderRadius: 8 }}
+            >
+              Repository Settings
+            </Button>
+          </div>
+          {retryMsg && <div className="small mt-3 text-info">{retryMsg}</div>}
+        </div>
+      ) : findings.length === 0 ? (
+        <div
+          className="text-center py-5 px-4"
+          style={{
+            background: "var(--surface-card)",
+            border: "2px dashed var(--border-default)",
             borderRadius: 12,
           }}
         >
@@ -718,8 +840,8 @@ export default function ReviewDetailPage() {
       ) : (
         <div
           style={{
-            background: "white",
-            border: "1px solid #E5E7EB",
+            background: "var(--surface-card)",
+            border: "1px solid var(--border-default)",
             borderRadius: 12,
             overflow: "hidden",
           }}
@@ -742,12 +864,12 @@ export default function ReviewDetailPage() {
                 }}
                 className="d-flex align-items-start px-3 py-3"
                 style={{
-                  borderBottom: isLast ? "none" : "1px solid #F3F4F6",
+                  borderBottom: isLast ? "none" : "1px solid var(--border-subtle)",
                   cursor: "pointer",
                   transition: "background 0.1s ease",
                 }}
-                onMouseEnter={(e) => (e.currentTarget.style.background = "#F9FAFB")}
-                onMouseLeave={(e) => (e.currentTarget.style.background = "white")}
+                onMouseEnter={(e) => (e.currentTarget.style.background = "var(--surface-card-elevated)")}
+                onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
               >
                 {/* Severity pill */}
                 <span
@@ -771,7 +893,7 @@ export default function ReviewDetailPage() {
                 <div className="ms-3 flex-grow-1" style={{ minWidth: 0 }}>
                   <div
                     className="fw-semibold d-flex align-items-center gap-2"
-                    style={{ color: "#111827", fontSize: "0.92rem" }}
+                    style={{ color: "var(--text-primary)", fontSize: "0.92rem" }}
                   >
                     {/* AI agent findings get a brain icon so they're easy to
                         spot among static-tool findings. */}
@@ -788,7 +910,7 @@ export default function ReviewDetailPage() {
                           width: 20,
                           height: 20,
                           borderRadius: 6,
-                          background: "linear-gradient(135deg, #4F46E5, #06B6D4)",
+                          background: "linear-gradient(135deg, #FF570A, #25E2A8)",
                           color: "white",
                           flexShrink: 0,
                         }}
@@ -801,9 +923,8 @@ export default function ReviewDetailPage() {
                   <div className="text-muted small mt-1 d-flex flex-wrap gap-2 align-items-center">
                     {f.category && (
                       <Badge
-                        bg="light"
-                        text="dark"
-                        className="text-uppercase"
+                        bg="secondary"
+                        className="text-uppercase border border-secondary-subtle"
                         style={{ fontSize: "0.65rem", letterSpacing: "0.04em" }}
                       >
                         {f.category}

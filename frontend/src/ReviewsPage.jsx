@@ -58,10 +58,10 @@ const ReviewsPage = () => {
                 skeletonCount={5}
                 skeletonHeight="70px"
             >
-                <div className="card border-0 shadow-sm rounded-4 overflow-hidden">
+                <div className="card shadow-sm rounded-4 overflow-hidden" style={{ background: 'var(--surface-card)', border: '1px solid var(--border-default)' }}>
                     <div className="table-responsive">
                         <table className="table table-hover mb-0 align-middle">
-                            <thead className="table-light text-muted small text-uppercase">
+                            <thead className="small text-uppercase" style={{ background: 'var(--surface-card-elevated)', color: 'var(--text-muted)' }}>
                                 <tr>
                                     <th className="px-4 py-3 border-0">Repository</th>
                                     <th className="py-3 border-0 text-center">Status</th>
@@ -75,7 +75,7 @@ const ReviewsPage = () => {
                                 {reviews.map((review) => (
                                     <tr key={review.id} style={{ cursor: 'pointer' }} onClick={() => handleRowClick(review.id)}>
                                         <td className="px-4 py-3">
-                                            <div className="fw-bold text-dark">{review.repo_name || 'Manual Upload'}</div>
+                                            <div className="fw-bold" style={{ color: 'var(--text-primary)' }}>{review.repo_name || 'Manual Upload'}</div>
                                             <div className="small text-muted">{review.branch || 'main'}</div>
                                         </td>
                                         <td className="py-3 text-center">

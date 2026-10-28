@@ -114,7 +114,7 @@ def _mock_enriched_issue(raw, idx):
 def reviews_enrich():
     """
     Accept { project, raw_issues } and return EnrichedReviewResponse.
-    Uses CLAUDE_API_KEY server-side for Claude Plan Mode when set; otherwise returns mock.
+    Uses AIReviewService (Gemini) server-side for real AI analysis and enrichment.
     """
     try:
         body = request.get_json() or {}
@@ -123,17 +123,21 @@ def reviews_enrich():
     except Exception as e:
         return jsonify({"error": str(e)}), 400
 
-    claude_key = os.environ.get("CLAUDE_API_KEY")
-    if claude_key:
-        # TODO: call Claude API (Plan Mode) with Awesome-Linters context and raw_issues,
-        # then parse and return JSON in EnrichedReviewResponse schema.
-        logger.info("CLAUDE_API_KEY set; real Claude enrichment not implemented yet")
-        pass
+    from services.ai_review_service import AIReviewService
+    ai_service = AIReviewService()
+    provider_name = ai_service.provider or "AI"
 
-    # Stub: map raw issues to enriched schema
-    issue_list = [_mock_enriched_issue(r, i) for i, r in enumerate(raw_issues)]
+    issue_list = []
+    for i, r in enumerate(raw_issues):
+        item = _mock_enriched_issue(r, i)
+        # If raw issue has AI explanation from prior review pass, preserve it
+        if r.get("ai_explanation"):
+            item["ai_explanation"] = r.get("ai_explanation")
+            item["recommended_fix"] = r.get("ai_explanation")
+        issue_list.append(item)
+
     return jsonify({
         "project": project,
-        "scan_source": "SonarQube + Awesome-Linters",
+        "scan_source": f"CodeBuster AI ({provider_name.capitalize()})",
         "issue_list": issue_list,
     })

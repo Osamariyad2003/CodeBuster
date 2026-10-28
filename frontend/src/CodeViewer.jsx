@@ -1,11 +1,15 @@
 import React, { useState } from 'react';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { ghcolors } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import { ghcolors, vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { Card } from 'react-bootstrap';
+import { useTheme } from './useTheme';
 import './CodeViewer.css';
 
 const CodeViewer = ({ filePath, fileContent, comments, language }) => {
+  const [theme] = useTheme();
   const [activeCommentLine, setActiveCommentLine] = useState(null);
+  const isDark = theme === 'dark';
+  const syntaxStyle = isDark ? vscDarkPlus : ghcolors;
 
   // Enhanced line props for highlighting and hover effects
   const lineProps = (lineNumber) => {
@@ -51,11 +55,11 @@ const CodeViewer = ({ filePath, fileContent, comments, language }) => {
       <Card.Body className="p-0 position-relative">
         <SyntaxHighlighter
           language={language || 'javascript'}
-          style={ghcolors}
+          style={syntaxStyle}
           showLineNumbers
           wrapLines
           lineProps={lineProps}
-          customStyle={{ margin: 0, padding: '1rem', fontSize: '0.85rem', background: 'var(--surface-card)' }}
+          customStyle={{ margin: 0, padding: '1rem', fontSize: '0.85rem', background: 'var(--surface-card)', color: 'var(--text-primary)' }}
         >
           {fileContent || ''}
         </SyntaxHighlighter>

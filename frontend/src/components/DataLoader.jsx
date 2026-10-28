@@ -19,7 +19,7 @@ const DataLoader = ({
     if (error) {
         return (
             <div className="p-5 text-center my-4 border border-danger border-opacity-25 rounded-4 bg-danger bg-opacity-10">
-                <div className="mb-3 fs-1">⚠️</div>
+                <div className="mb-3 fs-1">⚠</div>
                 <h4 className="text-danger mb-2">Failed to load data</h4>
                 <p className="text-muted mb-4">{error.message || "An unexpected error occurred."}</p>
                 {onRetry && (

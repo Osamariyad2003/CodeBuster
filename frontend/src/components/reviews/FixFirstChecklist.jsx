@@ -4,8 +4,8 @@ import { FaShieldAlt, FaExclamationTriangle, FaInfoCircle, FaBolt, FaChevronRigh
 const SEV_CONFIG = {
     critical: { color: '#EF4444', bg: '#FEF2F2', icon: FaShieldAlt,           label: 'Critical' },
     major:    { color: '#F59E0B', bg: '#FFFBEB', icon: FaExclamationTriangle, label: 'Major'    },
-    minor:    { color: '#3B82F6', bg: '#EFF6FF', icon: FaInfoCircle,          label: 'Minor'    },
-    info:     { color: '#6366F1', bg: '#EEF2FF', icon: FaBolt,                label: 'Info'     },
+    minor:    { color: '#687FF5', bg: '#EEF2FF', icon: FaInfoCircle,          label: 'Minor'    },
+    info:     { color: '#FF570A', bg: '#FFF3ED', icon: FaBolt,                label: 'Info'     },
 };
 
 const detectSeverity = (item) => {
@@ -34,15 +34,15 @@ export default function FixFirstChecklist({ items = [], onSelectItem }) {
         <div>
             {/* progress bar */}
             <div className="d-flex align-items-center gap-2 mb-3">
-                <div style={{ flex: 1, height: 5, background: '#F1F5F9', borderRadius: 99, overflow: 'hidden' }}>
+                <div style={{ flex: 1, height: 5, background: 'var(--surface-muted, rgba(255,255,255,0.08))', borderRadius: 99, overflow: 'hidden' }}>
                     <div style={{
                         height: '100%', borderRadius: 99,
-                        background: 'linear-gradient(90deg, #6366F1, #10B981)',
+                        background: 'linear-gradient(90deg, #FF570A, #25E2A8)',
                         width: `${(doneCount / items.length) * 100}%`,
                         transition: 'width 0.35s ease',
                     }} />
                 </div>
-                <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748B', whiteSpace: 'nowrap' }}>
+                <span style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
                     {doneCount}/{items.length}
                 </span>
             </div>
@@ -62,27 +62,27 @@ export default function FixFirstChecklist({ items = [], onSelectItem }) {
                             onClick={() => onSelectItem ? onSelectItem(id) : toggle(id)}
                             style={{
                                 display: 'flex', alignItems: 'flex-start', gap: 10,
-                                background: done ? '#F8FAFC' : '#fff',
-                                border: `1px solid ${done ? '#E2E8F0' : cfg.color + '28'}`,
+                                background: done ? 'var(--surface-muted, rgba(255,255,255,0.03))' : 'var(--surface-card, #0E1118)',
+                                border: `1px solid ${done ? 'var(--border-subtle, rgba(255,255,255,0.05))' : cfg.color + '33'}`,
                                 borderRadius: 10, padding: '10px 12px',
                                 cursor: 'pointer',
                                 opacity: done ? 0.55 : 1,
                                 transition: 'all 0.18s',
                             }}
                             onMouseEnter={e => {
-                                if (!done) e.currentTarget.style.background = cfg.bg;
-                                e.currentTarget.style.borderColor = cfg.color + '55';
+                                if (!done) e.currentTarget.style.background = cfg.color + '15';
+                                e.currentTarget.style.borderColor = cfg.color + '66';
                             }}
                             onMouseLeave={e => {
-                                e.currentTarget.style.background = done ? '#F8FAFC' : '#fff';
-                                e.currentTarget.style.borderColor = done ? '#E2E8F0' : cfg.color + '28';
+                                e.currentTarget.style.background = done ? 'var(--surface-muted, rgba(255,255,255,0.03))' : 'var(--surface-card, #0E1118)';
+                                e.currentTarget.style.borderColor = done ? 'var(--border-subtle, rgba(255,255,255,0.05))' : cfg.color + '33';
                             }}
                         >
                             {/* rank / check badge */}
                             <div style={{
                                 width: 22, height: 22, borderRadius: 6, flexShrink: 0,
-                                background: done ? '#E2E8F0' : cfg.color,
-                                color: done ? '#94A3B8' : '#fff',
+                                background: done ? 'var(--surface-card-elevated, #151923)' : cfg.color,
+                                color: done ? 'var(--text-muted)' : '#fff',
                                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                                 fontSize: '0.65rem', fontWeight: 800,
                                 marginTop: 1,
@@ -94,7 +94,7 @@ export default function FixFirstChecklist({ items = [], onSelectItem }) {
                             <div style={{ flex: 1, minWidth: 0 }}>
                                 <div style={{
                                     fontSize: '0.82rem', fontWeight: 600,
-                                    color: done ? '#94A3B8' : '#1E293B',
+                                    color: done ? 'var(--text-muted)' : 'var(--text-primary, #F8FAFC)',
                                     textDecoration: done ? 'line-through' : 'none',
                                     lineHeight: 1.4,
                                     display: '-webkit-box', WebkitLineClamp: 2,
@@ -111,7 +111,7 @@ export default function FixFirstChecklist({ items = [], onSelectItem }) {
                             </div>
 
                             {onSelectItem && (
-                                <FaChevronRight size={10} style={{ color: '#CBD5E1', flexShrink: 0, marginTop: 4 }} />
+                                <FaChevronRight size={10} style={{ color: 'var(--text-muted)', flexShrink: 0, marginTop: 4 }} />
                             )}
                         </div>
                     );

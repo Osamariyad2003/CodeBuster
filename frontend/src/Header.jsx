@@ -5,6 +5,7 @@ import { useAuth } from './AuthContext';
 import { FaGithub, FaMoon, FaSun, FaSignOutAlt, FaUser, FaCode, FaBolt, FaRocket } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 import RepoConfigModal from './RepoConfigModal';
+import { BrandLogo } from './components/brand/BrandLogo';
 
 const Header = () => {
   const { user, logout, isAuthenticated, repos, connectedRepos } = useAuth();
@@ -36,55 +37,10 @@ const Header = () => {
         {/* Brand */}
         <Navbar.Brand
           href="/"
-          className="d-flex align-items-center gap-3 fw-bold"
+          className="d-flex align-items-center"
           style={{ cursor: 'pointer', textDecoration: 'none' }}
         >
-          <div
-            style={{
-              width: 44,
-              height: 44,
-              borderRadius: '12px',
-              background: 'var(--primary-brand)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              boxShadow: '0 4px 12px rgba(79, 70, 229, 0.25)'
-            }}
-          >
-            <FaCode size={24} style={{ color: 'white' }} />
-          </div>
-          <div className="d-flex flex-column">
-            <div className="d-flex align-items-center gap-2">
-              <span style={{
-                fontWeight: 700,
-                fontSize: '1.25rem',
-                color: 'var(--text-primary)',
-                letterSpacing: '-0.02em'
-              }}>
-                CodeBuster
-              </span>
-              <Badge
-                style={{
-                  background: 'rgba(79, 70, 229, 0.1)',
-                  color: 'var(--primary-brand)',
-                  border: '1px solid rgba(79, 70, 229, 0.2)',
-                  fontSize: '0.65rem',
-                  padding: '4px 8px',
-                  fontWeight: 700,
-                  borderRadius: '6px'
-                }}
-              >
-                AI
-              </Badge>
-            </div>
-            <span style={{
-              fontSize: '0.75rem',
-              fontWeight: 500,
-              color: 'var(--text-muted)'
-            }}>
-              AI Code Review Platform
-            </span>
-          </div>
+          <BrandLogo size={28} subtitle="AI Code Review Platform" animated />
         </Navbar.Brand>
 
         <Navbar.Toggle aria-controls="basic-navbar-nav" />
@@ -178,7 +134,7 @@ const Header = () => {
                     className="d-flex align-items-center gap-2 text-decoration-none p-1 px-3 rounded-pill"
                     style={{
                       border: '1px solid var(--border-subtle)',
-                      background: 'white',
+                      background: 'var(--surface-card)',
                       fontWeight: 600,
                       fontSize: '0.9rem',
                       color: 'var(--text-primary)'
@@ -202,7 +158,9 @@ const Header = () => {
                       overflowY: 'auto',
                       padding: '12px',
                       borderRadius: '12px',
-                      boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)'
+                      background: 'var(--surface-card)',
+                      border: '1px solid var(--border-default)',
+                      boxShadow: '0 10px 25px -3px rgba(0, 0, 0, 0.4)'
                     }}
                   >
                     <div className="d-flex justify-content-between align-items-center mb-2 px-2">
@@ -276,7 +234,7 @@ const Header = () => {
                     className="d-flex align-items-center gap-2 text-decoration-none p-1 rounded-pill"
                     style={{
                       border: '1px solid var(--border-subtle)',
-                      background: 'white'
+                      background: 'var(--surface-card)'
                     }}
                     id="dropdown-user"
                     aria-label="User profile menu"
@@ -299,10 +257,10 @@ const Header = () => {
 
                   <Dropdown.Menu
                     style={{
-                      background: 'white',
-                      border: '1px solid var(--border-subtle)',
+                      background: 'var(--surface-card)',
+                      border: '1px solid var(--border-default)',
                       borderRadius: '12px',
-                      boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
+                      boxShadow: '0 10px 25px -3px rgba(0, 0, 0, 0.4)',
                       padding: '8px'
                     }}
                   >

@@ -31,6 +31,11 @@ export interface Review {
   id: string;
   repo_id: string;
   repo_name?: string;
+  status?: string;
+  error_message?: string;
+  commit_sha?: string;
+  branch?: string;
+  pr_number?: number;
   overall_score?: number;
   overall_grade?: string;
   status?: string;
@@ -74,6 +79,11 @@ export interface AIStats {
 export interface ReviewDetail {
   id: string;
   repo_id: string;
+  status?: string;
+  error_message?: string;
+  commit_sha?: string;
+  branch?: string;
+  pr_number?: number;
   overall_score?: number;
   overall_grade?: string;
   category_scores?: Array<{ key: string; label: string; score: number }>;

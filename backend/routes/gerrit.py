@@ -139,7 +139,11 @@ def get_commits():
     if not repo:
         return jsonify({"error": "Repository not found"}), 404
 
-    user_session = session.get("user")
+    user_session = session.get("user") or {}
+    user_db = User.query.get(user_session.get("id")) if user_session.get("id") else User.query.filter_by(username=user_session.get("login")).first()
+    if not user_db or repo.connected_by != user_db.id:
+        return jsonify({"error": "Forbidden: Access denied to repository"}), 403
+
     access_token = _get_access_token(repo, user_session)
 
     if not access_token:
@@ -248,6 +252,11 @@ def run_gerrit():
     repo = Repository.query.get(repo_id)
     if not repo:
         return jsonify({"error": "Repository not found"}), 404
+
+    user_session = session.get("user") or {}
+    user_db = User.query.get(user_session.get("id")) if user_session.get("id") else User.query.filter_by(username=user_session.get("login")).first()
+    if not user_db or repo.connected_by != user_db.id:
+        return jsonify({"error": "Forbidden: Access denied to repository"}), 403
 
     # Idempotency: return existing completed review for this commit
     if commit_sha:

@@ -90,7 +90,7 @@ def _cache_get_installed_repos(redis_client, installation_id: int):
         data = json.loads(raw)
         return data
     except Exception as e:
-        print(f"[WARN]️ Failed to read installed repos cache for {installation_id}: {e}")
+        print(f"[WARN] Failed to read installed repos cache for {installation_id}: {e}")
         return None
 
 
@@ -101,7 +101,7 @@ def _cache_set_installed_repos(redis_client, installation_id: int, repos, ttl_se
     try:
         redis_client.setex(key, ttl_seconds, json.dumps(repos))
     except Exception as e:
-        print(f"[WARN]️ Failed to write installed repos cache for {installation_id}: {e}")
+        print(f"[WARN] Failed to write installed repos cache for {installation_id}: {e}")
 
 def login_required(f):
     @wraps(f)
@@ -111,7 +111,18 @@ def login_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
-    return decorated_function
+
+def _get_current_user_db():
+    """Helper to resolve current User model instance from session."""
+    user_session = session.get('user') or {}
+    user_id = user_session.get('id')
+    login = user_session.get('login') or user_session.get('username')
+    user_db = None
+    if user_id:
+        user_db = User.query.get(user_id)
+    if not user_db and login:
+        user_db = User.query.filter_by(username=login).first()
+    return user_db
 
 # Auth functions moved to utils/github_auth.py
 
@@ -183,6 +194,11 @@ def get_repos():
 
         # Fetch personal public repos via user OAuth token
         oauth_token = user_session.get('access_token')
+        if not oauth_token and user_db:
+            try:
+                oauth_token = user_db.get_access_token()
+            except Exception:
+                oauth_token = None
         if oauth_token:
             print("DEBUG: Fetching user personal repos via OAuth...")
             user_repos_response = session_gh.get(
@@ -263,7 +279,7 @@ def search_public_repositories():
         try:
             redis_client = get_redis()
         except Exception as e:
-            print(f"[WARN]️ Redis unavailable for public-repos cache: {e}")
+            print(f"[WARN] Redis unavailable for public-repos cache: {e}")
             redis_client = None
 
         cache_key = f"github:public_search:{query}:{page}:{per_page}"
@@ -275,7 +291,7 @@ def search_public_repositories():
                     # Already in response shape from previous call
                     return jsonify(data)
             except Exception as e:
-                print(f"[WARN]️ Failed to read public search cache: {e}")
+                print(f"[WARN] Failed to read public search cache: {e}")
 
         # Call GitHub Search API
         try:
@@ -316,7 +332,7 @@ def search_public_repositories():
                 item.connected_repo_id = None
                 items.append(item)
             except Exception as e:
-                print(f"[WARN]️ Failed to sanitize public repo {raw.get('full_name')}: {e}")
+                print(f"[WARN] Failed to sanitize public repo {raw.get('full_name')}: {e}")
 
         resp_schema = PublicReposResponseSchema(
             items=items,
@@ -330,7 +346,7 @@ def search_public_repositories():
             try:
                 redis_client.setex(cache_key, 30, json.dumps(data))
             except Exception as e:
-                print(f"[WARN]️ Failed to write public search cache: {e}")
+                print(f"[WARN] Failed to write public search cache: {e}")
 
         return jsonify(data)
     except Exception as e:
@@ -411,7 +427,7 @@ def search_installed_repos():
         try:
             redis_client = get_redis()
         except Exception as e:
-            print(f"[WARN]️ Redis unavailable for installed-repos cache: {e}")
+            print(f"[WARN] Redis unavailable for installed-repos cache: {e}")
             redis_client = None
 
         # Build map of connected repos for CTA purposes.
@@ -431,7 +447,7 @@ def search_installed_repos():
             else:
                 access_token = get_installation_access_token(inst_id)
                 if not access_token:
-                    print(f"[WARN]️ Failed to get installation token for {inst_id}")
+                    print(f"[WARN] Failed to get installation token for {inst_id}")
                     continue
                 raw_repos = list_installation_repositories(inst_id, access_token)
                 # Cache raw GitHub payload (safe fields only; no tokens).
@@ -442,7 +458,7 @@ def search_installed_repos():
                     item = _sanitize_github_repo(raw, installation_id=inst_id)
                     all_items.append(item)
                 except Exception as e:
-                    print(f"[WARN]️ Failed to sanitize repo {raw.get('full_name')}: {e}")
+                    print(f"[WARN] Failed to sanitize repo {raw.get('full_name')}: {e}")
 
         # De-duplicate by full_name (installation may appear multiple times in edge cases)
         dedup_map = {}
@@ -514,6 +530,11 @@ def connect_repo():
         # Check if already exists
         existing = Repository.query.filter_by(full_name=repo_full_name).first()
         if existing:
+            if existing.connected_by != user_db.id:
+                return jsonify({
+                    "error": "This repository is already connected by another account.",
+                    "code": "ALREADY_CONNECTED_BY_OTHER"
+                }), 403
             return jsonify({
                 "success": True,
                 "message": "Already connected",
@@ -644,13 +665,24 @@ def fork_repo():
 @login_required
 def disconnect_repo():
     try:
-        data = request.get_json()
+        data = request.get_json() or {}
         repo_full_name = data.get('repo_full_name')
+        if not repo_full_name:
+            return jsonify({"error": "repo_full_name is required"}), 400
+
+        user_db = _get_current_user_db()
+        if not user_db:
+            return jsonify({"error": "Unauthorized"}), 401
 
         repo = Repository.query.filter_by(full_name=repo_full_name).first()
-        if repo:
-            db.session.delete(repo)
-            db.session.commit()
+        if not repo:
+            return jsonify({"error": "Repository not found"}), 404
+
+        if repo.connected_by != user_db.id:
+            return jsonify({"error": "Forbidden: You do not have permission to disconnect this repository"}), 403
+
+        db.session.delete(repo)
+        db.session.commit()
 
         return jsonify({"success": True, "message": f"Disconnected {repo_full_name}"})
     except Exception as e:
@@ -662,7 +694,7 @@ def disconnect_repo():
 @github_bp.route('/fix/apply', methods=['POST'])
 @login_required
 def apply_fix():
-    """Apply a suggested fix to a GitHub repository."""
+    """Apply a suggested fix to a GitHub repository, falling back to Autonomous AI Fix Agent if deterministic patching cannot locate the code."""
     try:
         data = request.get_json()
         issue_id = data.get('issue_id')
@@ -681,41 +713,84 @@ def apply_fix():
             return jsonify({"error": "Review not found"}), 404
             
         repository = Repository.query.get(review.repository_id)
-        if not repository or not repository.installation_id:
-            return jsonify({"error": "Repository not connected or missing installation_id"}), 400
+        if not repository:
+            return jsonify({"error": "Repository not found"}), 404
+
+        user_db = _get_current_user_db()
+        if not user_db or repository.connected_by != user_db.id:
+            return jsonify({"error": "Forbidden: You do not have permission to apply fixes to this repository"}), 403
             
-        # 3. Get installation token
-        access_token = get_installation_access_token(repository.installation_id)
+        # 2. Resolve access token (GitHub App installation token or user OAuth token fallback)
+        access_token = None
+        if repository.installation_id:
+            access_token = get_installation_access_token(repository.installation_id)
+        if not access_token and user_db:
+            access_token = user_db.get_access_token()
+
         if not access_token:
-            return jsonify({"error": "Failed to get installation token"}), 500
+            return jsonify({"error": "Failed to resolve repository access token"}), 500
 
-        # 4. Apply fix using FixService
+        # 3. Apply fix using FixService
         fix_service = FixService(access_token)
-        result = fix_service.apply_fix(
-            repository.full_name,
-            issue.file_path,
-            issue
-        )
+        suggested_fix = issue.get_suggested_fix() or {}
+        is_steps_fix = isinstance(suggested_fix, dict) and suggested_fix.get('type') == 'steps'
+        has_code_or_line = bool(issue.line_number or issue.code_snippet)
 
-        # If the call failed with a permissions error, the cached installation
-        # token may predate a recent App permissions upgrade. Mint a fresh one
-        # (bypassing the Redis cache) and retry exactly once.
-        if not result.get('success'):
-            err_text = (result.get('error') or '').lower()
-            looks_like_perm = ('403' in err_text) or ('not accessible by integration' in err_text)
-            if looks_like_perm:
-                print("[?] Stale installation token suspected — refreshing and retrying fix")
-                fresh_token = get_installation_access_token(
-                    repository.installation_id, force_refresh=True
-                )
-                if fresh_token and fresh_token != access_token:
-                    result = FixService(fresh_token).apply_fix(
-                        repository.full_name,
-                        issue.file_path,
-                        issue,
+        result = None
+        # Try deterministic fix only if we have concrete line/snippet and not prose steps
+        if not is_steps_fix and has_code_or_line:
+            result = fix_service.apply_fix(
+                repository.full_name,
+                issue.file_path,
+                issue
+            )
+
+            # If the call failed with a permissions error, the cached installation
+            # token may predate a recent App permissions upgrade. Mint a fresh one.
+            if not result.get('success'):
+                err_text = (result.get('error') or '').lower()
+                looks_like_perm = ('403' in err_text) or ('not accessible by integration' in err_text)
+                if looks_like_perm and repository.installation_id:
+                    fresh_token = get_installation_access_token(
+                        repository.installation_id, force_refresh=True
                     )
+                    if fresh_token and fresh_token != access_token:
+                        result = FixService(fresh_token).apply_fix(
+                            repository.full_name,
+                            issue.file_path,
+                            issue,
+                        )
 
-        if result.get('success'):
+        # 4. If deterministic fix failed or code couldn't be located, run Autonomous AI Fix Agent
+        if not result or not result.get('success'):
+            err_text = (result or {}).get('error', '')
+            can_try_ai = (
+                is_steps_fix
+                or not has_code_or_line
+                or "could not locate" in err_text.lower()
+                or "no fix code" in err_text.lower()
+                or "comment, not a code replacement" in err_text.lower()
+            )
+            if can_try_ai:
+                try:
+                    from services.ai_review_service import AIReviewService
+                    ai_service = AIReviewService()
+                    if ai_service.provider:
+                        print(f"[FIX] Cascading to Autonomous AI Fix Agent ({ai_service.provider}) for issue {issue.id}")
+                        ai_result = fix_service.apply_ai_fix_pr(
+                            repository.full_name,
+                            issue.file_path,
+                            issue,
+                            ai_service
+                        )
+                        if ai_result.get('success'):
+                            result = ai_result
+                        elif not result:
+                            result = ai_result
+                except Exception as ai_err:
+                    print(f"[FIX] AI Fix fallback error: {ai_err}")
+
+        if result and result.get('success'):
             # Update issue status
             issue.status = 'resolved'
             db.session.commit()
@@ -729,11 +804,12 @@ def apply_fix():
                 "pr_url": result.get('pr_url'),
                 "pr_number": result.get('pr_number'),
                 "pr_warning": result.get('pr_warning'),
+                "ai_summary": result.get('ai_summary'),
             })
         else:
             return jsonify({
                 "success": False,
-                "error": result.get('error')
+                "error": (result or {}).get('error', 'Failed to apply fix')
             }), 400
             
     except Exception as e:
@@ -766,12 +842,21 @@ def apply_ai_fix():
             return jsonify({"error": "Review not found"}), 404
 
         repository = Repository.query.get(review.repository_id)
-        if not repository or not repository.installation_id:
-            return jsonify({"error": "Repository not connected or missing installation_id"}), 400
+        if not repository:
+            return jsonify({"error": "Repository not found"}), 404
 
-        access_token = get_installation_access_token(repository.installation_id)
+        user_db = _get_current_user_db()
+        if not user_db or repository.connected_by != user_db.id:
+            return jsonify({"error": "Forbidden: You do not have permission to apply fixes to this repository"}), 403
+
+        access_token = None
+        if repository.installation_id:
+            access_token = get_installation_access_token(repository.installation_id)
+        if not access_token and user_db:
+            access_token = user_db.get_access_token()
+
         if not access_token:
-            return jsonify({"error": "Failed to get installation token"}), 500
+            return jsonify({"error": "Failed to resolve repository access token"}), 500
 
         from services.ai_review_service import AIReviewService
         ai_service = AIReviewService()
@@ -857,6 +942,10 @@ def apply_fix_sprint():
         if not repository or not repository.installation_id:
             return jsonify({"error": "Repository not connected or missing installation_id"}), 400
 
+        user_db = _get_current_user_db()
+        if not user_db or repository.connected_by != user_db.id:
+            return jsonify({"error": "Forbidden: You do not have permission to apply fixes to this repository"}), 403
+
         access_token = get_installation_access_token(repository.installation_id)
         if not access_token:
             return jsonify({"error": "Failed to get installation token"}), 500
@@ -921,6 +1010,10 @@ def preview_fix():
         repository = Repository.query.get(review.repository_id)
         if not repository or not repository.installation_id:
             return jsonify({"error": "Repository not connected"}), 400
+
+        user_db = _get_current_user_db()
+        if not user_db or repository.connected_by != user_db.id:
+            return jsonify({"error": "Forbidden: You do not have permission to preview fixes for this repository"}), 403
 
         access_token = get_installation_access_token(repository.installation_id)
         if not access_token:
@@ -1170,25 +1263,51 @@ def get_connected_repos():
 
 @github_bp.route('/webhook', methods=['POST'])
 def github_webhook_handler():
-    """Wrapped webhook handler with Rate Limiting and Idempotency."""
+    """Wrapped webhook handler with Signature Check, Rate Limiting and Idempotency."""
+    # 1. Cryptographic HMAC verification MUST run first before inspecting cache or delivery IDs
+    secret = GITHUB_WEBHOOK_SECRET or os.getenv('GITHUB_WEBHOOK_SECRET', '')
+    if not secret:
+        print("[ERR] GITHUB_WEBHOOK_SECRET is not configured on server")
+        return jsonify({"error": "Webhook secret not configured on server"}), 500
+
+    signature = request.headers.get('X-Hub-Signature-256', '')
+    body = request.get_data()
+    expected_signature = 'sha256=' + hmac.new(
+        secret.encode('utf-8'),
+        body,
+        hashlib.sha256
+    ).hexdigest()
+
+    if not hmac.compare_digest(signature, expected_signature):
+        print("[ERR] Invalid webhook signature")
+        return jsonify({"error": "Invalid signature"}), 401
+
+    # 2. Redis-backed rate limiting & idempotency with graceful degradation if Redis is down
     try:
         r = get_redis()
     except Exception as e:
-        print(f"Redis connection failed: {e}")
-        return jsonify({"error": "Internal Error"}), 500
+        print(f"[WARN] Redis connection failed in webhook handler: {e}")
+        r = None
 
-    client_ip = request.remote_addr
-    if not rate_limit(r, client_ip, limit_per_minute=60):
-        print(f"[WARN]️ Rate limit exceeded for {client_ip}")
-        return jsonify({"error": "Too many requests"}), 429
+    if r:
+        try:
+            client_ip = request.remote_addr
+            if not rate_limit(r, client_ip, limit_per_minute=60):
+                print(f"[WARN] Rate limit exceeded for {client_ip}")
+                return jsonify({"error": "Too many requests"}), 429
+        except Exception as e:
+            print(f"[WARN] Rate limit evaluation skipped due to Redis error: {e}")
 
-    delivery_id = request.headers.get('X-GitHub-Delivery')
-    if delivery_id:
-        if is_duplicate_delivery(r, delivery_id):
-            print(f"[INFO]️ Duplicate delivery skipped: {delivery_id}")
-            return jsonify({"message": "Already processed"}), 200
+        delivery_id = request.headers.get('X-GitHub-Delivery')
+        if delivery_id:
+            try:
+                if is_duplicate_delivery(r, delivery_id):
+                    print(f"[INFO] Duplicate delivery skipped: {delivery_id}")
+                    return jsonify({"message": "Already processed"}), 200
+            except Exception as e:
+                print(f"[WARN] Duplicate delivery check skipped due to Redis error: {e}")
 
-    return github_webhook_logic()
+    return github_webhook_logic(already_verified=True)
 
 def github_webhook_logic():
     """Actual webhook logic."""
@@ -1197,11 +1316,16 @@ def github_webhook_logic():
     
     try:
         # Verify webhook signature
+        secret = GITHUB_WEBHOOK_SECRET or os.getenv('GITHUB_WEBHOOK_SECRET', '')
+        if not secret:
+            print("[ERR] GITHUB_WEBHOOK_SECRET is not configured on server")
+            return jsonify({"error": "Webhook secret not configured on server"}), 500
+
         signature = request.headers.get('X-Hub-Signature-256', '')
         body = request.get_data()
         
         expected_signature = 'sha256=' + hmac.new(
-            GITHUB_WEBHOOK_SECRET.encode(),
+            secret.encode('utf-8'),
             body,
             hashlib.sha256
         ).hexdigest()
@@ -1210,7 +1334,9 @@ def github_webhook_logic():
             print("[ERR] Invalid webhook signature")
             return jsonify({"error": "Invalid signature"}), 401
         
-        payload = request.get_json()
+        payload = request.get_json(silent=True)
+        if not payload:
+            return jsonify({"error": "Invalid or missing JSON payload"}), 400
         event_type = request.headers.get('X-GitHub-Event')
         delivery_id = request.headers.get('X-GitHub-Delivery', str(uuid.uuid4()))
         installation_id = payload.get('installation', {}).get('id', '')
@@ -1276,7 +1402,7 @@ def github_webhook_logic():
             }), 202
         else:
             record_webhook_event(delivery_id, event_type, repo_name, None, 'ignored', reason=f'Event type {event_type} not processed')
-            print(f"[WARN]️  Unhandled event type: {event_type}")
+            print(f"[WARN]  Unhandled event type: {event_type}")
             return jsonify({"message": "Event received but not processed"}), 200
         
     except Exception as e:

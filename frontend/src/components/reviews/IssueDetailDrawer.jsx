@@ -21,7 +21,7 @@ function ExplanationRenderer({ text }) {
             if (p.startsWith('`') && p.endsWith('`'))
                 return (
                     <code key={`${keyPrefix}-c${i}`} style={{
-                        background: 'rgba(79,70,229,0.08)', color: '#4F46E5',
+                        background: 'rgba(255,87,10,0.08)', color: '#FF570A',
                         padding: '1px 5px', borderRadius: 4, fontSize: '0.85em',
                     }}>{p.slice(1, -1)}</code>
                 );
@@ -74,7 +74,7 @@ function ExplanationRenderer({ text }) {
                 borderRadius: 10,
                 padding: '14px 16px',
                 fontSize: '0.875rem',
-                color: '#1E293B',
+                color: 'var(--text-primary, #F8FAFC)',
             }}
         >
             <div className="d-flex align-items-center gap-2 mb-2">
@@ -128,9 +128,9 @@ const TAG_COLORS = {
     'performance': '#0D9488',
     'n+1': '#0D9488',
     'memory': '#0D9488',
-    'architecture': '#6366F1',
-    'coupling': '#6366F1',
-    'abstraction': '#6366F1',
+    'architecture': '#FF570A',
+    'coupling': '#FF570A',
+    'abstraction': '#FF570A',
 };
 
 const tagColor = (tag) => TAG_COLORS[(tag || '').toLowerCase()] || '#6B7280';
@@ -346,7 +346,7 @@ export default function IssueDetailDrawer({ show, onHide, issue: issueProp, cano
                 <Offcanvas.Title className="d-flex align-items-center gap-2 flex-wrap">
                     <Badge bg={severityVariant(issue.severity)}>{issue.severity || '—'}</Badge>
                     {(issue.dimension || issue.category) && (
-                        <Badge bg="light" text="dark">{issue.dimension || issue.category}</Badge>
+                        <Badge bg="secondary" className="border border-secondary-subtle">{issue.dimension || issue.category}</Badge>
                     )}
                     {issue.confidence != null && (
                         <span className="small text-muted">Confidence: {confidenceLabel(issue.confidence)}</span>
@@ -373,13 +373,13 @@ export default function IssueDetailDrawer({ show, onHide, issue: issueProp, cano
                                 width: 32,
                                 height: 32,
                                 borderRadius: 8,
-                                background: 'linear-gradient(135deg, #4F46E5, #06B6D4)',
+                                background: 'linear-gradient(135deg, #FF570A, #25E2A8)',
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
                                 color: 'white',
                                 flexShrink: 0,
-                                boxShadow: '0 4px 10px rgba(79, 70, 229, 0.25)',
+                                boxShadow: '0 4px 10px rgba(255, 87, 10, 0.25)',
                             }}
                         >
                             <FaBrain size={14} />
@@ -391,7 +391,7 @@ export default function IssueDetailDrawer({ show, onHide, issue: issueProp, cano
                                     fontWeight: 700,
                                     letterSpacing: '0.05em',
                                     textTransform: 'uppercase',
-                                    color: '#4F46E5',
+                                    color: '#FF570A',
                                 }}
                             >
                                 AI Senior Engineer
@@ -437,9 +437,9 @@ export default function IssueDetailDrawer({ show, onHide, issue: issueProp, cano
                                 style={{
                                     display: 'inline-flex',
                                     alignItems: 'center',
-                                    background: '#F3F4F6',
-                                    color: '#374151',
-                                    border: '1px solid #E5E7EB',
+                                    background: 'var(--surface-muted, rgba(255,255,255,0.06))',
+                                    color: 'var(--text-secondary, #94A3B8)',
+                                    border: '1px solid var(--border-default, rgba(255,255,255,0.08))',
                                     padding: '3px 10px',
                                     borderRadius: 999,
                                     fontSize: '0.72rem',
@@ -461,8 +461,8 @@ export default function IssueDetailDrawer({ show, onHide, issue: issueProp, cano
 
                 {issue.description && (
                     <div className="mb-4">
-                        <SectionLabel accent="#4F46E5">Description</SectionLabel>
-                        <p className="mb-0" style={{ whiteSpace: 'pre-wrap', color: '#111827' }}>
+                        <SectionLabel accent="#FF570A">Description</SectionLabel>
+                        <p className="mb-0" style={{ whiteSpace: 'pre-wrap', color: 'var(--text-primary, #F8FAFC)' }}>
                             {issue.description}
                         </p>
                     </div>
@@ -477,7 +477,7 @@ export default function IssueDetailDrawer({ show, onHide, issue: issueProp, cano
                 {issue.impact && issue.impact !== issue.description && (
                     <div className="mb-4">
                         <SectionLabel accent="#F59E0B">Impact</SectionLabel>
-                        <p className="mb-0" style={{ whiteSpace: 'pre-wrap', color: '#111827' }}>
+                        <p className="mb-0" style={{ whiteSpace: 'pre-wrap', color: 'var(--text-primary, #F8FAFC)' }}>
                             {issue.impact}
                         </p>
                     </div>
@@ -486,7 +486,7 @@ export default function IssueDetailDrawer({ show, onHide, issue: issueProp, cano
                 {typeof issue.recommendation === 'string' && issue.recommendation.trim() && (
                     <div className="mb-4">
                         <SectionLabel accent="#059669">Recommendation</SectionLabel>
-                        <p className="mb-0" style={{ whiteSpace: 'pre-wrap', color: '#111827' }}>
+                        <p className="mb-0" style={{ whiteSpace: 'pre-wrap', color: 'var(--text-primary, #F8FAFC)' }}>
                             {issue.recommendation}
                         </p>
                     </div>
@@ -495,9 +495,9 @@ export default function IssueDetailDrawer({ show, onHide, issue: issueProp, cano
                 {/* Canonical: evidence.snippets */}
                 {snippets.length > 0 && (
                     <div className="mb-4">
-                        <SectionLabel accent="#6366F1">Evidence</SectionLabel>
+                        <SectionLabel accent="#FF570A">Evidence</SectionLabel>
                         {snippets.map((sn, i) => (
-                            <div key={i} className="mt-2 p-2 bg-light rounded small">
+                            <div key={i} className="mt-2 p-2 rounded small" style={{ background: 'var(--surface-card)', border: '1px solid var(--border-default)' }}>
                                 <div className="text-muted mb-1">
                                     {sn.file_path}
                                     {(sn.start_line != null || sn.end_line != null) && (
@@ -564,7 +564,7 @@ export default function IssueDetailDrawer({ show, onHide, issue: issueProp, cano
                 {/* Legacy: evidence as string[] */}
                 {!isCanonical && issue.evidence && Array.isArray(issue.evidence) && issue.evidence.length > 0 && (
                     <div className="mb-4">
-                        <SectionLabel accent="#6366F1">Evidence</SectionLabel>
+                        <SectionLabel accent="#FF570A">Evidence</SectionLabel>
                         <ul className="small mb-0">
                             {issue.evidence.map((e, i) => (
                                 <li key={i}>{typeof e === 'string' ? e : JSON.stringify(e)}</li>
@@ -578,7 +578,7 @@ export default function IssueDetailDrawer({ show, onHide, issue: issueProp, cano
                     <div className="mb-4">
                         <SectionLabel accent="#059669">Recommendation</SectionLabel>
                         {recommendation.summary && (
-                            <p className="mb-2" style={{ whiteSpace: 'pre-wrap', color: '#111827' }}>
+                            <p className="mb-2" style={{ whiteSpace: 'pre-wrap', color: 'var(--text-primary, #F8FAFC)' }}>
                                 {recommendation.summary}
                             </p>
                         )}
@@ -593,7 +593,7 @@ export default function IssueDetailDrawer({ show, onHide, issue: issueProp, cano
                 )}
 
                 {/* AI-Enhanced: suggested_fix.content */}
-                {issue.suggested_fix && issue.suggested_fix.content && (
+                {Boolean(issue.suggested_fix) && (
                     <div className="mb-4">
                         <div className="d-flex align-items-center justify-content-between mb-2">
                             <SectionLabel accent="#198754">Suggested Fix</SectionLabel>
@@ -609,7 +609,9 @@ export default function IssueDetailDrawer({ show, onHide, issue: issueProp, cano
                                 borderLeft: '4px solid #198754',
                                 fontFamily: "'Fira Code', 'Courier New', monospace"
                             }}>
-                                {issue.suggested_fix.content}
+                                {typeof issue.suggested_fix === 'object' && issue.suggested_fix !== null
+                                    ? (issue.suggested_fix.content || issue.suggested_fix.patch || JSON.stringify(issue.suggested_fix, null, 2))
+                                    : String(issue.suggested_fix)}
                             </pre>
                         </div>
                         <p className="small text-muted mt-2 mb-0">
@@ -632,7 +634,7 @@ export default function IssueDetailDrawer({ show, onHide, issue: issueProp, cano
                                 width: 32,
                                 height: 32,
                                 borderRadius: 8,
-                                background: 'linear-gradient(135deg, #4F46E5, #06B6D4)',
+                                background: 'linear-gradient(135deg, #FF570A, #25E2A8)',
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
@@ -848,12 +850,12 @@ export default function IssueDetailDrawer({ show, onHide, issue: issueProp, cano
                                     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                                         <div style={{
                                             width: 22, height: 22, borderRadius: '50%',
-                                            background: step.done ? '#6366f1' : step.active ? 'rgba(99,102,241,0.2)' : 'transparent',
-                                            border: `2px solid ${step.done || step.active ? '#6366f1' : '#374151'}`,
+                                            background: step.done ? '#FF570A' : step.active ? 'rgba(255,87,10,0.2)' : 'transparent',
+                                            border: `2px solid ${step.done || step.active ? '#FF570A' : '#374151'}`,
                                             display: 'flex', alignItems: 'center', justifyContent: 'center',
                                             flexShrink: 0,
                                             fontSize: 10, fontWeight: 700,
-                                            color: step.done ? '#fff' : step.active ? '#818cf8' : '#6b7280',
+                                            color: step.done ? '#fff' : step.active ? '#FF7A30' : '#6b7280',
                                         }}>
                                             {step.done ? <FaCheck size={9} /> : step.num}
                                         </div>
